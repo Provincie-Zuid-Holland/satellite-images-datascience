@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 """
 
 
-class nso_tif_kernel:
+class nso_tif_kernel_generator:
 
     """
         This class set up a .tif image in order to easily extracts kernel from it.

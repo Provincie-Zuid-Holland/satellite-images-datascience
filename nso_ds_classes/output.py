@@ -1,4 +1,12 @@
+import json
+import geopandas as gpd
 
+
+"""
+
+This class handles various methods to write the results to a geojson.
+
+"""
 
 
 def produce_geojson(segmentation, fname):
