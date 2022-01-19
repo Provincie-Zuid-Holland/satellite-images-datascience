@@ -11,7 +11,7 @@ The following figure represents the input we have for a model:
 ![Alt text](basic_model_input.png?raw=true "Title")
 
 
-# (image processing) Kernels.
+# (Image Processing) Kernels.
 
 For the models (image processing) kernels are extracted from the original .tif satellite images.
 Code is written here which should make this easy to do.
@@ -40,11 +40,13 @@ kernel.shape
 ```
 # Models.
 
-Since the satellite files contains a lot of pixels sometimes 3 billion, we have used a simple model in order to increase performance for larger satellite images.
+Since the satellite files contains a lot of pixels, sometimes 3 billion, we have used different models in order to increase performance for larger satellite images.
 ## Euclidean distance Model.
 
 
-This model simply calcultes the euclidean distance to pre annotated pixel kernels
+This model simply calculates the euclidean distance to pre annotated pixel kernels and then basis it's predictions on the shortest distance.
+
+The following image demonstrates this model:
 
 
 ![Alt text](simple_model.png?raw=true "Title")
@@ -53,7 +55,7 @@ This model simply calcultes the euclidean distance to pre annotated pixel kernel
 
 We use keras in python with following architecture:
 
-![Alt text](deep_learning_architecture?raw=true "Title")
+![Alt text](deep_learning_architecture.png?raw=true "Title")
 
 
 # Author

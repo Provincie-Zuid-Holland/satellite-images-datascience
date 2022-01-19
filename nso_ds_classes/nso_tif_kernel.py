@@ -2,7 +2,7 @@ import numpy as np
 import rasterio
 from rasterio.plot import show
 from matplotlib import pyplot as plt
-
+import pandas as pd
 
 """
     This code is used to extract image processing kernels from nso satellite images.
@@ -50,6 +50,11 @@ class nso_tif_kernel_generator:
         self.y_size = y_size
         self.y_size_begin = round(y_size/2)
         self.y_size_end = round(y_size/2)
+
+
+
+
+
 
 
     def set_fade_kernel(self, fade_power = 0.045, bands = 4):
@@ -104,7 +109,7 @@ class nso_tif_kernel_generator:
 
 
 
-    def get_x_y(self,x_cor,y_cor):
+    def get_x_y(self, x_cor, y_cor):
         """
         
         Get the x and y, which means the x row and y column position in the matrix, based on the x, y in the geography coordinate system.
@@ -114,17 +119,36 @@ class nso_tif_kernel_generator:
         @param y_cor: y coordinate inthe geography coordinate system.
         @return x,y row and column position the matrix.
         """
-        index_x, index_y = self.dataset.index(x, y)
+        index_x, index_y = self.dataset.index(x_cor, y_cor)
         return index_x,index_y
 
     def get_height(self):
+        """
+        Get the height of the .tif file.
+
+        @return the height of the .tif file.
+        """
         return self.height
 
     def get_width(self):
+        """
+        Get the width of the .tif file.
+
+        @return the width of the .tif file.
+        """
         return self.width
 
     def get_data(self):
+        """
+        
+        Return the numpy array with all the spectral data in it.
+
+        @return the numpy data with the spectral data  in it.
+        """
         return self.data
+
+
+
 
 
 
