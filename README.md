@@ -77,7 +77,7 @@ euclidean_distance_model.predict_kernel(kernel)
 #output: "bos"
 ```
 
-## Deep learning.
+## Deep learning Model.
 
 We use Keras in python with following architecture:
 

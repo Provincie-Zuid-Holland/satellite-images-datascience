@@ -6,6 +6,8 @@ import geopandas as gpd
 
 This class handles various methods to write the results to a geojson.
 
+@author: Michael de Winter, Jeroen Esseveld
+
 """
 
 
@@ -35,4 +37,9 @@ def dissolve_label_geojson(path_in, path_out):
         union_gpd = agpd[agpd['label'] == label].unary_union
         dissolved = dissolved.append([{"label":label,"geometry":union_gpd}])
     print("------")
-    dissolved.to_file(path_out, driver="GeoJSON") 
+
+    if '.geojson' not in path_out:
+        dissolved.to_file(path_out) 
+         
+    elif '.geojson' in path_out:
+        dissolved.to_file(path_out, driver="GeoJSON")
