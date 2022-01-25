@@ -34,6 +34,9 @@ class euclidean_distance_model:
         annotations['rd_x_y'] = annotations.apply(lambda x: self.kernel_generator.get_x_y(x['x_cor'], x['y_cor'] ),axis=1)
         annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x['rd_x_y'][0],x['rd_x_y'][1]), axis=1)
         self.class_kernels = annotations
+
+    def set_custom_kernels(self, aclass_kernels):
+        self.class_kernels = aclass_kernels   
         
     def get_annotations(self):
 
