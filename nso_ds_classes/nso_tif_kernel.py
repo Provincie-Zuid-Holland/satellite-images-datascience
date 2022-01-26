@@ -155,7 +155,7 @@ class nso_tif_kernel_generator:
 
         for x_step in range(begin_part,steps):
             print("-------")
-            print("Part: "+str(x_step)+" of "+str(steps))
+            print("Part: "+str(x_step+1)+" of "+str(steps))
             print(begin_height)
             print(end_height)
             
