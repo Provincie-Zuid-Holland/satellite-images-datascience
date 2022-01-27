@@ -9,6 +9,8 @@ from tqdm import tqdm
 import os
 import glob
 import geopandas as gpd
+from multiprocessing import Pool
+import itertools
 
 """
     This code is used to extract image processing kernels from nso satellite images.
@@ -222,52 +224,100 @@ class nso_tif_kernel_generator:
             os.remove(file)
 
 
-    def predict_all_output_old(self, amodel, output_location, aggregate_output = True):
+    def func_multi_processing(self, input_x_y):
+
+         try:
+                        # Fetches the real coordinates for the row and column needed for writing to a geoformat.
+                        #actual_cor = self.get_x_cor_y_cor(x,y)  
+                        kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1])
+                        return [input_x_y[0], input_x_y[1], self.model.predict(kernel)]
+
+         except ValueError as e:
+                        xio = 0
+         except Exception as e:
+                        print(e)
+
+
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
         """
             Predict all the pixels in the .tif file.
 
             @param amodel: A prediciton model.
         """
-     
-        seg_df = np.zeros((((self.get_height()-self.x_size)*(self.get_width()-self.y_size)),3))
-        seg_df_idx = 0
-        for x in tqdm(range(self.x_size_begin, self.get_height()-self.x_size_end)):
-            for y in range(self.y_size_begin, self.get_width()-self.y_size_end):
-                
-                try:
-                    # Fetches the real coordinates for the row and column needed for writing  geo
-                    actual_cor = self.get_x_cor_y_cor(x,y)  
-                    kernel = self.get_kernel_for_x_y(x,y)
-                    seg_df[seg_df_idx] = [actual_cor[0], actual_cor[1], amodel.predict(kernel)]
-                    seg_df_idx = seg_df_idx+1
 
-                except ValueError as e:
-                     xio = 0
-                except Exception as e:
-                    print(e)
+        total_height = self.get_height() - self.x_size
 
-                
+        height_steps = round(total_height/steps)
+        begin_height = self.x_size_begin
+        end_height = self.x_size_begin+height_steps
 
-        seg_df = pd.DataFrame(seg_df, columns = ['rd_x','rd_y','class'] )
-        seg_df = seg_df[(seg_df['rd_x'] != 0) & (seg_df['rd_y'] != 0)]
-        seg_df['class'] = seg_df.apply(lambda x: amodel.get_class_label(x['class']), axis=1)
+        total_height = self.get_height()-self.x_size
+        total_width = self.get_width()-self.y_size
 
-        if aggregate_output == True:
-            seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
-            seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
-            seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('class', \
-                                                    lambda x: x.value_counts().index[0])
-                                                )
-        seg_df["x"] = list(map(lambda x: x[0], seg_df.index))
-        seg_df["y"] = list(map(lambda x: x[1], seg_df.index))
-        seg_df= seg_df[["x","y","label"]].values
+        height_steps = total_height/steps
+
         
-        local_path_geojson = "./current.geojson"
-        nso_ds_output.produce_geojson(seg_df,local_path_geojson)
-        nso_ds_output.dissolve_label_geojson(local_path_geojson, output_location)
-        os.remove(local_path_geojson)
+        self.set_model(amodel)
+
+        for x_step in range(begin_part,steps):
+            print("-------")
+            print("Part: "+str(x_step+1)+" of "+str(steps))
+            print(begin_height)
+            print(end_height)
+            
+   
+                 
+            p = Pool()
+            seg_df = p.map(self.func_multi_processing,list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)] )))
+            p.close()
+                    
+            seg_df = pd.DataFrame(seg_df, columns = ['rd_x','rd_y','class'] )
+            seg_df = seg_df[(seg_df['rd_x'] != 0) & (seg_df['rd_y'] != 0)]
+            seg_df['class'] = seg_df.apply(lambda x: amodel.get_class_label(x['class']), axis=1)
+
+            if aggregate_output == True:
+                seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
+                seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
+                seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('class', \
+                                                        lambda x: x.value_counts().index[0])
+                                                    )
+            seg_df["x"] = list(map(lambda x: x[0], seg_df.index))
+            seg_df["y"] = list(map(lambda x: x[1], seg_df.index))
+            seg_df= seg_df[["x","y","label"]].values
+            
+            local_path_geojson = "./current.geojson"
+            nso_ds_output.produce_geojson(seg_df,local_path_geojson)
+            nso_ds_output.dissolve_label_geojson(local_path_geojson, output_location.replace(".","_part_"+str(x_step)+"."))
+            print(output_location.replace(".","_part_"+str(x_step)+"."))
+            os.remove(local_path_geojson)
+
+            begin_height = int(round(end_height+1))
+            end_height = int(round(begin_height+height_steps))
+        
+            if end_height > self.get_height() - (self.x_size/2):
+                end_height = round(self.get_height() - (self.x_size/2))
+        
+        all_part = 0
+        first_check = 0
+
+        for file in glob.glob(output_location.replace(".","_part_*.")):
+                        print(file)
+                        if first_check == 0:
+                            all_part = gpd.read_file(file)
+                            first_check = 1
+                        else:
+                            print("Append")
+                            all_part = all_part.append(gpd.read_file(file))
+                        os.remove(file)
+
+        all_part.dissolve(by='label').to_file(output_location)
+
+        for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
+            os.remove(file)
 
 
+    def set_model(self, amodel):
+        self.model = amodel        
 
     def get_height(self):
         """
