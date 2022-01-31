@@ -10,8 +10,13 @@ This class handles various methods to write the results to a geojson.
 
 """
 
-
 def produce_geojson(segmentation, fname):
+    """
+        Outputs a geopandas dataframe to a label geojson format as output.
+    
+        @param segmentation: A pandas dataframe which has the predicted annotations
+        @param fname: The name of geojson which we will be writing too. 
+    """
     geojson = '{ "type":"FeatureCollection","crs":{"type":"name","properties":{"name":"epsg:28992"}},"features":['
     for i, seg in enumerate(segmentation):
         rect = [round(seg[0]/2)*2, round(seg[1]/2)*2, 0, 0]
@@ -26,6 +31,12 @@ def produce_geojson(segmentation, fname):
         f.write(geojson)
 
 def dissolve_label_geojson(path_in, path_out):
+    """
+        Aggregates pixel labels to polygon labels and thus reduces data.
+
+        @param path_in: path to unaggregate pixel data.
+        @param path_out: path which to write the aggregated data.
+    """
     # open your file with geopandas
     agpd = gpd.GeoDataFrame.from_file(path_in)
     dissolved = gpd.GeoDataFrame(columns=['label', 'geometry'], crs=agpd.crs)

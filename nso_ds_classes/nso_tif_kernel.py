@@ -11,6 +11,7 @@ import glob
 import geopandas as gpd
 from multiprocessing import Pool
 import itertools
+from timeit import default_timer as timer
 
 """
     This code is used to extract image processing kernels from nso satellite images.
@@ -45,7 +46,10 @@ class nso_tif_kernel_generator:
         width, height = meta["width"], meta["height"]
 
         self.data = data
-        self.dataset = dataset
+
+        # TODO: Because of multiprocessing we can't stored rasterio datasets.
+        self.path_to_tif_file = path_to_tif_file
+        #self.dataset = dataset
         self.width = width
         self.height = height
 
@@ -116,12 +120,17 @@ class nso_tif_kernel_generator:
         Get the x and y, which means the x row and y column position in the matrix, based on the x, y in the geography coordinate system.
         Needed to get a kernel for a specific x and y in the coordinate system.
 
+        Due to multi processing we have to read in the rasterio data set each time. 
+
         @param x_cor: x coordinate in the geography coordinate system.
         @param y_cor: y coordinate inthe geography coordinate system.
         @return x,y row and column position the matrix.
         """
-        index_x, index_y = self.dataset.index(x_cor, y_cor)
-        return index_x,index_y
+        # TODO: Because of multi processing we have to read in the .tif every time.
+        index_x, index_y = rasterio.open(self.path_to_tif_file).index(x_cor, y_cor)
+
+        
+        return pd.Series({'rd_x':int(index_x), 'rd_y':int(index_y)}) 
 
 
     def get_x_cor_y_cor(self, index_x , index_y):
@@ -233,9 +242,10 @@ class nso_tif_kernel_generator:
                         return [input_x_y[0], input_x_y[1], self.model.predict(kernel)]
 
          except ValueError as e:
-                        xio = 0
+                        return [0,0,0]
          except Exception as e:
                         print(e)
+                        return [0,0,0]
 
 
     def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
@@ -259,22 +269,27 @@ class nso_tif_kernel_generator:
         
         self.set_model(amodel)
 
-        for x_step in range(begin_part,steps):
+        for x_step in tqdm(range(begin_part,steps)):
             print("-------")
             print("Part: "+str(x_step+1)+" of "+str(steps))
-            print(begin_height)
-            print(end_height)
+            permutations = list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)]))
+            print(" Total permutations this step: "+str(len(permutations)))
             
-   
-                 
+            start = timer() 
             p = Pool()
-            seg_df = p.map(self.func_multi_processing,list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)] )))
-            p.close()
-                    
-            seg_df = pd.DataFrame(seg_df, columns = ['rd_x','rd_y','class'] )
-            seg_df = seg_df[(seg_df['rd_x'] != 0) & (seg_df['rd_y'] != 0)]
+            seg_df = p.map(self.func_multi_processing,permutations)
+            p.terminate()
+            print("Pool finised in: "+str(timer()-start)+" second(s)")
+         
+            start = timer() 
+            seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','class'] )
+            seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
             seg_df['class'] = seg_df.apply(lambda x: amodel.get_class_label(x['class']), axis=1)
+            seg_df = pd.concat([seg_df, seg_df.apply(lambda x: self.get_x_y(x['x_cor'], x['y_cor'] ),axis=1)], axis='columns')
+            seg_df = seg_df.drop(['y_cor','x_cor'], axis=1)
+            print("Pandas filter finised in: "+str(timer()-start)+" second(s)")
 
+            start = timer() 
             if aggregate_output == True:
                 seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
                 seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
@@ -290,6 +305,7 @@ class nso_tif_kernel_generator:
             nso_ds_output.dissolve_label_geojson(local_path_geojson, output_location.replace(".","_part_"+str(x_step)+"."))
             print(output_location.replace(".","_part_"+str(x_step)+"."))
             os.remove(local_path_geojson)
+            print("Writing finised in: "+str(timer()-start)+" second(s)")
 
             begin_height = int(round(end_height+1))
             end_height = int(round(begin_height+height_steps))

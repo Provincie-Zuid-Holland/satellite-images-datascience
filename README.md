@@ -9,6 +9,9 @@ The following figure represents the input we have for a model:
 
 ![Alt text](basic_model_input.png?raw=true "Title")
 
+
+This inout data is generated in .tif files which is done in the other satellite images nso github repo [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso/)
+
 # (Image Processing) Kernels.
 
 For the models (image processing) kernels are extracted from the original .tif satellite images.
@@ -34,10 +37,11 @@ tif_kernel_generator = nso_tif_kernel.nso_tif_kernel(path_to_tif_file, x_size_ke
 kernel = tif_kernel_generator.get_kernel_for_x_y(x_row,y_row )
 kernel.shape
 #output: (4, 32, 32)
+# This .tif file contains 4 dimensions in RGBI 
 ```
 # Models.
 
-Since the satellite files contains a lot of pixels, sometimes 3 billion, we have used different models in order to increase performance for larger satellite images.
+Since the satellite files contains a lot of pixels and we predict per pixel, sometimes 3 billion, we have used different models in order to increase performance for larger satellite images.
 ## Euclidean distance Model.
 
 This model simply calculates the Euclidean distance to pre annotated pixel kernels and then basis it's predictions on the shortest distance.
@@ -79,7 +83,7 @@ euclidean_distance_model.predict_kernel(kernel)
 
 ## Deep learning Model.
 
-We use Keras in python with following architecture:
+We use Keras in python and made a deep learning with following architecture:
 
 ![Alt text](deep_learning_architecture.png?raw=true "Title")
 
