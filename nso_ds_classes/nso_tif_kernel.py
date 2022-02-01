@@ -114,7 +114,7 @@ class nso_tif_kernel_generator:
 
 
 
-    def get_x_y(self, x_cor, y_cor):
+    def get_x_y(self, x_cor, y_cor, dataset = False):
         """
         
         Get the x and y, which means the x row and y column position in the matrix, based on the x, y in the geography coordinate system.
@@ -127,21 +127,29 @@ class nso_tif_kernel_generator:
         @return x,y row and column position the matrix.
         """
         # TODO: Because of multi processing we have to read in the .tif every time.
-        index_x, index_y = rasterio.open(self.path_to_tif_file).index(x_cor, y_cor)
+        if isinstance(dataset, bool):
+            index_x, index_y = rasterio.open(self.path_to_tif_file).index(x_cor, y_cor)
 
+        else:    
+            index_x, index_y = dataset.index(x_cor, y_cor)
         
         return pd.Series({'rd_x':int(index_x), 'rd_y':int(index_y)}) 
 
 
-    def get_x_cor_y_cor(self, index_x , index_y):
+    def get_x_cor_y_cor(self, index_x , index_y, dataset = False):
         """
         Returns the geometry coordinates for index_x row and index_y column.
         
         @param index_x: the row.
         @param index_y: the column.
         """
-        x_cor, y_cor = self.dataset.xy(index_x, index_y)
-        return x_cor, y_cor
+        if isinstance(dataset, bool):
+            index_x, index_y = rasterio.open(self.path_to_tif_file).index(index_x, index_y)
+
+        else:    
+            index_x, index_y = dataset.xy(index_x, index_y)
+        
+        return pd.Series({'rd_x':int(index_x), 'rd_y':int(index_y)}) 
 
 
  
@@ -163,6 +171,8 @@ class nso_tif_kernel_generator:
         total_width = self.get_width()-self.y_size
 
         height_steps = total_height/steps
+
+      
 
         for x_step in range(begin_part,steps):
             print("-------")
@@ -248,13 +258,20 @@ class nso_tif_kernel_generator:
                         return [0,0,0]
 
 
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = False, steps = 10, begin_part = 0):
         """
-            Predict all the pixels in the .tif file.
+            Predict all the pixels in the .tif file with kernels per pixel.
 
-            @param amodel: A prediciton model.
+            Uses multiprocessing to speed up the results.
+
+            @param amodel: A prediciton model with has to have a predict function.
+            @param output_location: Locatie where to writes the results too.
+            @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m
+            @param steps: break the .tif file in multiple steps this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory.
+            @param begin_part: skip certain parts in the steps
         """
-
+        
+        # Set some variables for breaking the .tif in different steps.
         total_height = self.get_height() - self.x_size
 
         height_steps = round(total_height/steps)
@@ -266,28 +283,38 @@ class nso_tif_kernel_generator:
 
         height_steps = total_height/steps
 
-        
+        # Set some variables for multiprocessing.
         self.set_model(amodel)
+        dataset = rasterio.open(self.path_to_tif_file)
 
         for x_step in tqdm(range(begin_part,steps)):
             print("-------")
             print("Part: "+str(x_step+1)+" of "+str(steps))
+            # Calculate the number of permutations for this step.
             permutations = list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)]))
-            print(" Total permutations this step: "+str(len(permutations)))
+            print("Total permutations this step: "+str(len(permutations)))
             
+            # Init the multiprocessing pool.
             start = timer() 
             p = Pool()
             seg_df = p.map(self.func_multi_processing,permutations)
             p.terminate()
+            del permutations
+
             print("Pool finised in: "+str(timer()-start)+" second(s)")
          
             start = timer() 
             seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','class'] )
             seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
-            seg_df['class'] = seg_df.apply(lambda x: amodel.get_class_label(x['class']), axis=1)
-            seg_df = pd.concat([seg_df, seg_df.apply(lambda x: self.get_x_y(x['x_cor'], x['y_cor'] ),axis=1)], axis='columns')
+            print("Number of used pixels for this step: "+str(len(seg_df)))
+
+            # Get the coordinates for the pixel locations.           
+            seg_df['rd_x'],seg_df['rd_y'] = rasterio.transform.xy(dataset.transform,seg_df['x_cor'], seg_df['y_cor'])
+            #seg_df = pd.concat([seg_df, seg_df.apply(lambda x: self.get_x_cor_y_cor(x['x_cor'], x['y_cor'], dataset ),axis=1)], axis='columns')
+            print("Got coordinates for pixels: "+str(timer()-start)+" second(s)")
+
             seg_df = seg_df.drop(['y_cor','x_cor'], axis=1)
-            print("Pandas filter finised in: "+str(timer()-start)+" second(s)")
+            
 
             start = timer() 
             if aggregate_output == True:
@@ -296,17 +323,26 @@ class nso_tif_kernel_generator:
                 seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('class', \
                                                         lambda x: x.value_counts().index[0])
                                                     )
-            seg_df["x"] = list(map(lambda x: x[0], seg_df.index))
-            seg_df["y"] = list(map(lambda x: x[1], seg_df.index))
-            seg_df= seg_df[["x","y","label"]].values
+                print("Group by finised in: "+str(timer()-start)+" second(s)")
+                
+                start = timer() 
+                seg_df["rd_x"] = list(map(lambda x: x[0], seg_df.index))
+                seg_df["rd_y"] = list(map(lambda x: x[1], seg_df.index))
+                print("Labels created in: "+str(timer()-start)+" second(s)")
+                
+                seg_df= seg_df[["rd_x","rd_y","label"]]
             
-            local_path_geojson = "./current.geojson"
-            nso_ds_output.produce_geojson(seg_df,local_path_geojson)
-            nso_ds_output.dissolve_label_geojson(local_path_geojson, output_location.replace(".","_part_"+str(x_step)+"."))
-            print(output_location.replace(".","_part_"+str(x_step)+"."))
-            os.remove(local_path_geojson)
-            print("Writing finised in: "+str(timer()-start)+" second(s)")
 
+            
+            seg_df = gpd.GeoDataFrame(seg_df, geometry=gpd.points_from_xy(seg_df.rd_x, seg_df.rd_y))
+            seg_df = seg_df.set_crs(epsg = 28992)
+
+            nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
+            print(output_location.replace(".","_part_"+str(x_step)+"."))
+
+            print("Writing finised in: "+str(timer()-start)+" second(s)")
+            print(seg_df.columns)
+            del seg_df
             begin_height = int(round(end_height+1))
             end_height = int(round(begin_height+height_steps))
         
@@ -324,10 +360,13 @@ class nso_tif_kernel_generator:
                         else:
                             print("Append")
                             all_part = all_part.append(gpd.read_file(file))
-                        os.remove(file)
+                            
+                        #os.remove(file)
 
-        all_part.dissolve(by='label').to_file(output_location)
-
+        print(all_part.columns)
+        all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
+        nso_ds_output.dissolve_gpd_output(all_part, output_location)
+        
         for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
             os.remove(file)
 

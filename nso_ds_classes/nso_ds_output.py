@@ -54,3 +54,21 @@ def dissolve_label_geojson(path_in, path_out):
          
     elif '.geojson' in path_out:
         dissolved.to_file(path_out, driver="GeoJSON")
+
+def dissolve_gpd_output(agpd, path_out):
+
+    dissolved = gpd.GeoDataFrame(columns=['label', 'geometry'], crs=agpd.crs)
+    labels = agpd['label'].unique()
+    #print("------")
+    for label in labels:
+
+      #  print(label)
+        union_gpd = agpd[agpd['label'] == label].unary_union
+        dissolved = dissolved.append([{"label":label,"geometry":union_gpd}])
+    #print("------")
+
+    if '.geojson' not in path_out:
+        dissolved.to_file(path_out) 
+         
+    elif '.geojson' in path_out:
+        dissolved.to_file(path_out, driver="GeoJSON")

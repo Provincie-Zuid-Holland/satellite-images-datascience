@@ -54,8 +54,8 @@ class euclidean_distance_model:
         Predict the class of a kernel based on annotations.
         
         """
-        return self.class_kernels.apply(lambda x: euclidean_distance_kernels(x['kernel'], kernel), axis=1).idxmin()
+        return str(int(self.class_kernels.apply(lambda x: euclidean_distance_kernels(x['kernel'], kernel), axis=1).idxmin()))
 
     def get_class_label(self,index):
 
-        return self.class_kernels[self.class_kernels.index == index]['label'].values[0]
+        return self.class_kernels[self.class_kernels.index == int(index)]['label'].values[0]
