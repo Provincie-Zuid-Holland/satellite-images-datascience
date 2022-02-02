@@ -12,6 +12,7 @@ import geopandas as gpd
 from multiprocessing import Pool
 import itertools
 from timeit import default_timer as timer
+from shapely.geometry import Polygon
 
 """
     This code is used to extract image processing kernels from nso satellite images.
@@ -257,18 +258,9 @@ class nso_tif_kernel_generator:
                         print(e)
                         return [0,0,0]
 
-    def func_cor_square(self, input_x_y):
 
 
-                        # Fetches the real coordinates for the row and column needed for writing to a geoformat.
-                        #actual_cor = self.get_x_cor_y_cor(x,y)  
-                        rect = [round(input_x_y[0]/2)*2, round(input_x_y[1]/2)*2, 0, 0]
-                        rect[2], rect[3] = rect[0] + 2, rect[1] + 2
-                        coords = [[rect[0], rect[1]], [rect[2], rect[1]], [rect[2], rect[3]], [rect[0], rect[3]], [rect[0], rect[1]]]
-                        return coords
-
-
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = False, steps = 10, begin_part = 0):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -306,10 +298,12 @@ class nso_tif_kernel_generator:
             print("Total permutations this step: "+str(len(permutations)))
             
             # Init the multiprocessing pool.
+            # TODO: Maybe use swifter for this?
             start = timer() 
             p = Pool()
             seg_df = p.map(self.func_multi_processing,permutations)
-            p.terminate()
+            
+
             del permutations
 
             print("Pool finised in: "+str(timer()-start)+" second(s)")
@@ -332,8 +326,7 @@ class nso_tif_kernel_generator:
                 seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
                 seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
                 seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('label', \
-                                                        lambda x: x.value_counts().index[0])
-                                                    )
+                                                        lambda x: x.value_counts().index[0]))
                 print("Group by finised in: "+str(timer()-start)+" second(s)")
                 
                 start = timer() 
@@ -342,13 +335,19 @@ class nso_tif_kernel_generator:
                 print("Labels created in: "+str(timer()-start)+" second(s)")
                 
                 seg_df= seg_df[["rd_x","rd_y","label"]]
-            
 
+            start = timer()  
             
-            seg_df = gpd.GeoDataFrame(seg_df, geometry=gpd.points_from_xy(seg_df.rd_x, seg_df.rd_y))
+            #print(p.map(func_cor_square, seg_df[["rd_x",["rd_y"] ]].to_numpy().tolist()))
+            seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
+            
+            p.terminate()
+            seg_df= seg_df[["geometry","label"]]
+
+            seg_df = gpd.GeoDataFrame(seg_df, geometry=seg_df.geometry)
             seg_df = seg_df.set_crs(epsg = 28992)
-
-            seg_df = seg_df.dissolve(by='label')
+            print("Geometry made in: "+str(timer()-start)+" second(s)")
+            #seg_df = seg_df.dissolve(by='label')
             nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
             print(output_location.replace(".","_part_"+str(x_step)+"."))
 
@@ -376,11 +375,12 @@ class nso_tif_kernel_generator:
                         #os.remove(file)
 
         print(all_part.columns)
+       
         all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
         all_part.dissolve(by='label').to_file(output_location)
         
-        #for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
-          #  os.remove(file)
+        for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
+            os.remove(file)
 
 
     def set_model(self, amodel):
@@ -427,5 +427,11 @@ def plot_kernel(kernel,y=0 ):
         else:
             rasterio.plot.show(np.clip(kernel[2::-1],0,2200)/2200 )
 
+def func_cor_square(input_x_y):
+
+        rect = [round(input_x_y[0]/2)*2, round(input_x_y[1]/2)*2, 0, 0]
+        rect[2], rect[3] = rect[0] + 2, rect[1] + 2
+        coords = Polygon([(rect[0], rect[1]), (rect[2], rect[1]), (rect[2], rect[3]), (rect[0], rect[3]), (rect[0], rect[1])])
+        return coords
 
 

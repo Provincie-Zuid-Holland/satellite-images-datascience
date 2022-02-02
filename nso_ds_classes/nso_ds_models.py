@@ -54,12 +54,15 @@ class euclidean_distance_model:
         """
         return self.class_kernels[self.class_kernels.index == self.class_kernels.apply(lambda x: euclidean_distance_kernels(x['kernel'], kernel), axis=1).idxmin()]['label'].values[0]
     
-    def predict(self, kernel):
+
+    def predict(self,kernel):
         """
         Predict the class of a kernel based on annotations.
-        
+
+        @param kernel: A kernel to be predicted.
+        @return: class in int type of the class.
         """
-        return int(self.class_kernels.apply(lambda x: euclidean_distance_kernels(x['kernel'], kernel), axis=1).idxmin())
+        return np.argmin([euclidean_distance_kernels(x,kernel)  for x in self.class_kernels['kernel'].values])
 
     def get_class_label(self,index):
 
