@@ -172,7 +172,7 @@ class nso_tif_kernel_generator:
 
         height_steps = total_height/steps
 
-      
+        dataset = rasterio.open(self.path_to_tif_file)
 
         for x_step in range(begin_part,steps):
             print("-------")
@@ -187,7 +187,7 @@ class nso_tif_kernel_generator:
                     
                     try:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
-                        actual_cor = self.get_x_cor_y_cor(x,y)  
+                        actual_cor = self.get_x_cor_y_cor(x,y,dataset)  
                         kernel = self.get_kernel_for_x_y(x,y)
                         seg_df[seg_df_idx] = [actual_cor[0], actual_cor[1], amodel.predict(kernel)]
                         seg_df_idx = seg_df_idx+1
@@ -257,8 +257,18 @@ class nso_tif_kernel_generator:
                         print(e)
                         return [0,0,0]
 
+    def func_cor_square(self, input_x_y):
 
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = False, steps = 10, begin_part = 0):
+
+                        # Fetches the real coordinates for the row and column needed for writing to a geoformat.
+                        #actual_cor = self.get_x_cor_y_cor(x,y)  
+                        rect = [round(input_x_y[0]/2)*2, round(input_x_y[1]/2)*2, 0, 0]
+                        rect[2], rect[3] = rect[0] + 2, rect[1] + 2
+                        coords = [[rect[0], rect[1]], [rect[2], rect[1]], [rect[2], rect[3]], [rect[0], rect[3]], [rect[0], rect[1]]]
+                        return coords
+
+
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -287,6 +297,7 @@ class nso_tif_kernel_generator:
         self.set_model(amodel)
         dataset = rasterio.open(self.path_to_tif_file)
 
+        # Loop through the steps.
         for x_step in tqdm(range(begin_part,steps)):
             print("-------")
             print("Part: "+str(x_step+1)+" of "+str(steps))
@@ -304,13 +315,13 @@ class nso_tif_kernel_generator:
             print("Pool finised in: "+str(timer()-start)+" second(s)")
          
             start = timer() 
-            seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','class'] )
+            seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','label'])
             seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
             print("Number of used pixels for this step: "+str(len(seg_df)))
 
             # Get the coordinates for the pixel locations.           
             seg_df['rd_x'],seg_df['rd_y'] = rasterio.transform.xy(dataset.transform,seg_df['x_cor'], seg_df['y_cor'])
-            #seg_df = pd.concat([seg_df, seg_df.apply(lambda x: self.get_x_cor_y_cor(x['x_cor'], x['y_cor'], dataset ),axis=1)], axis='columns')
+            
             print("Got coordinates for pixels: "+str(timer()-start)+" second(s)")
 
             seg_df = seg_df.drop(['y_cor','x_cor'], axis=1)
@@ -320,7 +331,7 @@ class nso_tif_kernel_generator:
             if aggregate_output == True:
                 seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
                 seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
-                seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('class', \
+                seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('label', \
                                                         lambda x: x.value_counts().index[0])
                                                     )
                 print("Group by finised in: "+str(timer()-start)+" second(s)")
@@ -337,6 +348,7 @@ class nso_tif_kernel_generator:
             seg_df = gpd.GeoDataFrame(seg_df, geometry=gpd.points_from_xy(seg_df.rd_x, seg_df.rd_y))
             seg_df = seg_df.set_crs(epsg = 28992)
 
+            seg_df = seg_df.dissolve(by='label')
             nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
             print(output_location.replace(".","_part_"+str(x_step)+"."))
 
@@ -365,10 +377,10 @@ class nso_tif_kernel_generator:
 
         print(all_part.columns)
         all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
-        nso_ds_output.dissolve_gpd_output(all_part, output_location)
+        all_part.dissolve(by='label').to_file(output_location)
         
-        for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
-            os.remove(file)
+        #for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
+          #  os.remove(file)
 
 
     def set_model(self, amodel):

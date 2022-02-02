@@ -23,4 +23,4 @@ if __name__ == '__main__':
         file = file.replace("\\","/") 
         tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(file, x_kernel_width , y_kernel_height)
         
-        tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model,"E:/output/Coepelduynen_segmentations/"+file.split("/")[-1].replace(".tif",".shp"), steps = 6)
+        tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model,"E:/output/Coepelduynen_segmentations/"+file.split("/")[-1].replace(".tif",".shp"), steps = 3)

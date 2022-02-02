@@ -22,7 +22,7 @@ class euclidean_distance_model:
         """
         self.kernel_generator =  a_kernel_generator
 
-    def set_ec_distance_annotations(self, path_annotations = "././annotations/coepelduynen_annotations.csv"):
+    def set_ec_distance_annotations(self, path_annotations = "././annotations/coepelduynen_annotations.csv", fade = False):
         """
         Set annotations for thi euclidean distance model based on a .csv file.
 
@@ -32,7 +32,12 @@ class euclidean_distance_model:
 
         annotations = pd.read_csv(path_annotations)
         annotations = pd.concat([annotations, annotations.apply(lambda x: self.kernel_generator.get_x_y(x['x_cor'], x['y_cor'] ),axis=1)], axis='columns')
-        annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']), axis=1)
+
+        if fade == False:
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']), axis=1)
+        elif fade == True:
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fade_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
+
         self.class_kernels = annotations
 
     def set_custom_kernels(self, aclass_kernels):
@@ -54,7 +59,7 @@ class euclidean_distance_model:
         Predict the class of a kernel based on annotations.
         
         """
-        return str(int(self.class_kernels.apply(lambda x: euclidean_distance_kernels(x['kernel'], kernel), axis=1).idxmin()))
+        return int(self.class_kernels.apply(lambda x: euclidean_distance_kernels(x['kernel'], kernel), axis=1).idxmin())
 
     def get_class_label(self,index):
 
