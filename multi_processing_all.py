@@ -15,7 +15,7 @@ if __name__ == '__main__':
     tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
 
     euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_generator)
-    euclidean_distance_model.set_ec_distance_annotations()
+    euclidean_distance_model.set_ec_distance_baseline_annotations()
 
     for file in glob.glob("E:/data/coepelduynen/*.tif"):
         print("-------")
@@ -23,4 +23,4 @@ if __name__ == '__main__':
         file = file.replace("\\","/") 
         tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(file, x_kernel_width , y_kernel_height)
         
-        tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model,"E:/output/Coepelduynen_segmentations/"+file.split("/")[-1].replace(".tif",".shp"), steps = 3)
+        tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model,"E:/output/Coepelduynen_segmentations/"+file.split("/")[-1].replace(".tif",".shp"), steps = 3, fade = True)

@@ -14,6 +14,7 @@ import itertools
 from timeit import default_timer as timer
 from shapely.geometry import Polygon
 
+
 """
     This code is used to extract image processing kernels from nso satellite images.
 
@@ -74,7 +75,7 @@ class nso_tif_kernel_generator:
         self.fade_kernel = np.array([[(1-(fade_power*max(abs(idx-15),abs(idy-15)))) for idx in range(0,self.x_size)] for idy in range(0,self.y_size)])      
         self.fade_kernel = np.array([self.fade_kernel for id_x in range(0,bands)])
 
-    def fade_tile_kernel(self, kernel):
+    def fadify_kernel(self, kernel):
         """
 
         Multiply a kernel with the fade kernel, thus fading it.
@@ -108,7 +109,7 @@ class nso_tif_kernel_generator:
         if sum([band[index_x][index_y] for band in self.data]) == 0:
             raise ValueError("Center pixel is empty")
         else:
-            spot_kernel = [[k[index_y-self.x_size_end:index_y+self.x_size_begin] for k in band[index_x-self.y_size_end:index_x+self.y_size_begin] ] for band in self.data]
+            spot_kernel = [[k[index_y-self.x_size_end:index_y+self.x_size_begin] for k in band[index_x-self.y_size_end:index_x+self.y_size_begin]] for band in self.data]
             spot_kernel = np.array(spot_kernel)
             spot_kernel = spot_kernel.astype(int)
             return spot_kernel
@@ -250,6 +251,7 @@ class nso_tif_kernel_generator:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
                         kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1])
+                        kernel = self.fadify_kernel(kernel) if self.fade == True else kernel
                         return [input_x_y[0], input_x_y[1], self.model.predict(kernel)]
 
          except ValueError as e:
@@ -260,7 +262,7 @@ class nso_tif_kernel_generator:
 
 
 
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = False, steps = 10, begin_part = 0):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, fade = False):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -288,6 +290,7 @@ class nso_tif_kernel_generator:
         # Set some variables for multiprocessing.
         self.set_model(amodel)
         dataset = rasterio.open(self.path_to_tif_file)
+        self.fade = fade
 
         # Loop through the steps.
         for x_step in tqdm(range(begin_part,steps)):
@@ -384,6 +387,13 @@ class nso_tif_kernel_generator:
 
 
     def set_model(self, amodel):
+        """ 
+        Set a model coupled to this .tif generator.
+        Mostly used for multiprocessing purposes
+
+        @param amodel: The specific model to set.
+        
+        """
         self.model = amodel        
 
     def get_height(self):

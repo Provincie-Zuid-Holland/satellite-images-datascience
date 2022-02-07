@@ -1,6 +1,36 @@
-label,x_cor,y_cor, date
-gras_hoog, 88344.58, 470583.41, 2019-03
-bos, 88400.32, 470192.25, 2019-03
-zand_hoog, 88201.79, 470359.72, 2019-03
-gras_laag, 88069.32, 470126.55, 2019-03
-zand_laag,87639.78, 469946.24, 2019-03
+label,x_cor,y_cor,date,WGS84
+gras_hoog,88344.58,470583.41,baseline,
+bos,88400.32,470192.25,baseline,
+zand_hoog,88201.79,470359.72,baseline,
+gras_laag,88069.32,470126.55,baseline,
+zand_laag,87639.78,469946.24,baseline,
+gras_hoog,,,20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.tif,"4.4048832,52.2144157"
+bos,,,20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.tif,"4.4127971,52.2147247"
+zand_hoog,,,20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.tif,"4.4119979,52.2200167"
+gras_laag,,,20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.tif,"4.4059545,52.2166766"
+zand_laag,,,20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.tif,"4.4139749,52.2199780"
+gras_hoog,,,,
+bos,,,,
+zand_hoog,,,,
+gras_laag,,,,
+gras_hoog,,,,
+bos,,,,
+zand_hoog,,,,
+gras_laag,,,,
+zand_laag,,,,
+gras_hoog,,,,
+bos,,,,
+zand_hoog,,,,
+gras_laag,,,,
+zand_laag,,,,
+gras_hoog,,,,
+gras_hoog,,,,
+bos,,,,
+zand_hoog,,,,
+gras_laag,,,,
+zand_laag,,,,
+gras_hoog,,,,
+bos,,,,
+zand_hoog,,,,
+gras_laag,,,,
+zand_laag,,,,
