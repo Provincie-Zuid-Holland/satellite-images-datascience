@@ -34,7 +34,7 @@ y_size_kernel = 32
 x_row = 16
 y_row = 4757
 
-# Setuo up a kernel generator for this .tif file.
+# Setup up a kernel generator for this .tif file.
 tif_kernel_generator = nso_tif_kernel.nso_tif_kernel(path_to_tif_file, x_size_kernel, y_size_kernel)
 
 kernel = tif_kernel_generator.get_kernel_for_x_y(x_row,y_row )
@@ -45,7 +45,7 @@ kernel.shape
 # Set a fade kernel which gives more weight to the centre pixel in the kernel.
 tif_kernel_generator.set_fade_kernel()
 
-# Make a eclidean dist
+# Make a euclidean distance model.
 euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_generator)
 
 # Set annotations for the model to predict on.
@@ -108,7 +108,7 @@ We use Keras in python and made a deep learning with following architecture:
 Which is used in the following way:
 
 ```python
- x_kernel_width = 32
+    x_kernel_width = 32
     y_kernel_height = 32
 
 
