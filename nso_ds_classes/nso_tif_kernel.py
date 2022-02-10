@@ -66,7 +66,7 @@ class nso_tif_kernel_generator:
 
     def set_fade_kernel(self, fade_power = 0.045, bands = 4):
         """
-        Creates a fading kernel based on the shape of the other kernels.
+        Creates a fading kernel based on the shape of the other kernels and different parameters.
 
         @param fade_power: the power of the fade kernel.
         @param bands: the number bands that has to be faded.
@@ -85,7 +85,7 @@ class nso_tif_kernel_generator:
         """
         return kernel*self.fade_kernel
 
-    def unfade_tile_kernel(self, kernel):
+    def unfadify_tile_kernel(self, kernel):
         """
         Unfade a kernel, for example to plot it again.
 
@@ -246,7 +246,12 @@ class nso_tif_kernel_generator:
 
 
     def func_multi_processing(self, input_x_y):
+         """
+            This function is used to do multiprocessing predicting.
 
+            @param input_x_y: a array with the row and column for the to be predicted pixel.
+            @return row and column and the predicted label in numbers.
+         """
          try:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
@@ -275,7 +280,7 @@ class nso_tif_kernel_generator:
             @param begin_part: skip certain parts in the steps
         """
         
-        # Set some variables for breaking the .tif in different steps.
+        # Set some variables for breaking the .tif in different part steps in order to save memory.
         total_height = self.get_height() - self.x_size
 
         height_steps = round(total_height/steps)
@@ -341,16 +346,16 @@ class nso_tif_kernel_generator:
 
             start = timer()  
             
-            #print(p.map(func_cor_square, seg_df[["rd_x",["rd_y"] ]].to_numpy().tolist()))
+            # Make squares from the the pixels in order to make contected polygons from them.
             seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
             
             p.terminate()
             seg_df= seg_df[["geometry","label"]]
 
+            # Store the results in a geopandas dataframe.
             seg_df = gpd.GeoDataFrame(seg_df, geometry=seg_df.geometry)
             seg_df = seg_df.set_crs(epsg = 28992)
             print("Geometry made in: "+str(timer()-start)+" second(s)")
-            #seg_df = seg_df.dissolve(by='label')
             nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
             print(output_location.replace(".","_part_"+str(x_step)+"."))
 
@@ -375,11 +380,12 @@ class nso_tif_kernel_generator:
                             print("Append")
                             all_part = all_part.append(gpd.read_file(file))
                             
-                        #os.remove(file)
+                       
 
-        print(all_part.columns)
-       
-        all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
+   
+        if str(type(amodel)) != "<class 'nso_ds_classes.nso_ds_models.deep_learning_model'>":
+            all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
+
         all_part.dissolve(by='label').to_file(output_location)
         
         for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
