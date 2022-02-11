@@ -81,7 +81,10 @@ y_kernel_height = 32
 
 
 path_to_tif_file = "<PATH_TO_NSO_SAT_IMG.TIF>"
-tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
+out_path = "<PATH_TO_OUTPUT_FILE.shp"
+
+
+tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width, y_kernel_height)
 
 # Setup a euclidean distance model based on the tif kernel generator.
 euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_generator)
@@ -108,10 +111,11 @@ We use Keras in python and made a deep learning with following architecture:
 Which is used in the following way:
 
 ```python
+    import nso_ds_classes.nso_tif_kernel as nso_tif_kernel
+    import nso_ds_classes.nso_ds_models as nso_ds_models
+
     x_kernel_width = 32
     y_kernel_height = 32
-
-
 
     path_to_tif_file = "<PATH_TO_TIF_FILE>"
     out_path = "<PATH_TO_OUTPUT_FILE"
