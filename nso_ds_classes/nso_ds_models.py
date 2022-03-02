@@ -1,3 +1,4 @@
+from locale import normalize
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -7,6 +8,7 @@ from keras.layers.core import Flatten, Dense, Dropout
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
 from keras.models import load_model
 from sklearn.preprocessing import LabelEncoder
+from sqlalchemy import false
 
 
 
@@ -18,15 +20,17 @@ class euclidean_distance_model:
     """
 
 
-    def __init__(self, a_kernel_generator):
+    def __init__(self, a_kernel_generator,fade = False, normalize = False):
         """
         Init a euclidean distance model based on a .tif kernel generator.
 
         @param a_kernel_generator:  a .tif generator, see nso tif kernel for what this is.
         """
         self.kernel_generator =  a_kernel_generator
+        self.fade = fade
+        self.normalize = normalize
 
-    def set_ec_distance_baseline_annotations(self, path_annotations = "././annotations/coepelduynen_annotations.csv", fade = False):
+    def set_ec_distance_baseline_annotations(self, path_annotations = "././annotations/coepelduynen_annotations.csv"):
         """
         Set annotations for thi euclidean distance model based on a .csv file.
 
@@ -38,17 +42,21 @@ class euclidean_distance_model:
         annotations= annotations = annotations[annotations['date'] == "baseline"]
         annotations = pd.concat([annotations, annotations.apply(lambda x: self.kernel_generator.get_x_y(x['x_cor'], x['y_cor'] ),axis=1)], axis='columns')
 
-        if fade == False:
+        if self.fade == False:
             annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']), axis=1)
-        elif fade == True:
+        elif self.fade == True:
             annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fade_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
 
         self.class_kernels = annotations
     
-    def set_ec_distance_custom_annotations(self, sat_name, path_annotations = "././annotations/coepelduynen_annotations.csv", fade = False):
+    def set_ec_distance_custom_annotations(self, sat_name = "empty" , path_annotations = "././annotations/coepelduynen_annotations.csv" ):
         """ 
         Set custom predict kernels based on a sattelite name.
         """
+
+        if sat_name is "empty":
+            sat_name = self.kernel_generator.get_sat_name()
+
         annotations = pd.read_csv(path_annotations) 
         annotations = annotations[annotations['date'] == sat_name]
         annotations[['wgs84_e', 'wgs84_n']] = annotations['WGS84'].dropna().str.split(",",expand=True,)
@@ -61,10 +69,14 @@ class euclidean_distance_model:
 
         annotations[["rd_x", "rd_y"]] = annotations.apply(lambda x: self.kernel_generator.get_x_y(x['rd_x'], x['rd_y'] ),axis=1)
 
-        if fade == False:
+        if self.fade == False and self.normalize == False:
             annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']), axis=1)
-        elif fade == True:
+        elif self.fade == True and self.normalize == False:
             annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
+        elif self.fade == False and self.normalize == True:
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.normalize_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
+        elif self.fade == True and self.normalize == True:
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.normalize_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']))), axis=1)
 
         self.class_kernels = annotations.reset_index()
 
@@ -74,6 +86,12 @@ class euclidean_distance_model:
     def get_annotations(self):
 
         return self.class_kernels
+    
+    def get_fade(self):
+        return self.fade
+    
+    def get_normalize(self):
+        return self.normalize
 
     def predict_class_name(self, kernel):
         """

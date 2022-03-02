@@ -55,13 +55,15 @@ class nso_tif_kernel_generator:
         self.width = width
         self.height = height
 
-        self.x_size = x_size 
-        self.x_size_begin = round(x_size/2)
-        self.x_size_end = round(x_size/2)
+        self.x_size = x_size  
+        self.x_size_begin = round(x_size/2) 
+        self.x_size_end = round(x_size/2) 
 
         self.y_size = y_size
         self.y_size_begin = round(y_size/2)
         self.y_size_end = round(y_size/2)
+
+        self.sat_name = path_to_tif_file.split("/")[-1]
 
 
     def set_fade_kernel(self, fade_power = 0.045, bands = 4):
@@ -84,6 +86,17 @@ class nso_tif_kernel_generator:
         @return: A kernel that is faded now.
         """
         return kernel*self.fade_kernel
+
+
+
+    def normalize_tile_kernel(self, kernel):
+
+        
+        copy_kernel = np.zeros(shape=kernel.shape)
+        for x in range(0,kernel.shape[0]):
+            copy_kernel[x] = normalizedata(kernel[x]) 
+
+        return copy_kernel
 
     def unfadify_tile_kernel(self, kernel):
         """
@@ -256,7 +269,8 @@ class nso_tif_kernel_generator:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
                         kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1])
-                        kernel = self.fadify_kernel(kernel) if self.fade == True else kernel
+                        kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel
+                        kernel = self.fadify_kernel(kernel) if self.fade == True else kernel                      
                         return [input_x_y[0], input_x_y[1], self.model.predict(kernel)]
 
          except ValueError as e:
@@ -267,7 +281,7 @@ class nso_tif_kernel_generator:
 
 
 
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, fade = False):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -295,7 +309,8 @@ class nso_tif_kernel_generator:
         # Set some variables for multiprocessing.
         self.set_model(amodel)
         dataset = rasterio.open(self.path_to_tif_file)
-        self.fade = fade
+        self.fade = amodel.get_fade()
+        self.normalize = amodel.get_normalize()
 
         # Loop through the steps.
         for x_step in tqdm(range(begin_part,steps)):
@@ -427,6 +442,24 @@ class nso_tif_kernel_generator:
         """
         return self.data
 
+    def get_sat_name(self):
+        """
+        
+        Return the satellite name based on the file extension.
+
+        @return string with the satellite name.
+        """
+
+        return self.sat_name
+
+def normalizedata(data):
+        """
+        Normalize between 0 en 1.
+
+
+        """
+        return (data - np.min(data)) / (np.max(data) - np.min(data))
+
 
 def plot_kernel(kernel,y=0 ):
         """
@@ -439,9 +472,9 @@ def plot_kernel(kernel,y=0 ):
         """
 
         if isinstance(kernel, int):
-            rasterio.plot.show(np.clip(self.get_kernel_for_x_y(kernel,y)[2::-1],0,2200)/2200 )
+            rasterio.plot.show(np.clip(self.get_kernel_for_x_y(kernel,y)[2::-1],0,2200)/2200)
         else:
-            rasterio.plot.show(np.clip(kernel[2::-1],0,2200)/2200 )
+            rasterio.plot.show(np.clip(kernel[2::-1],0,2200)/2200)
 
 def func_cor_square(input_x_y):
 
