@@ -67,16 +67,16 @@ class euclidean_distance_model:
         annotations['rd_x'] = annotations['geometry'].x
         annotations['rd_y']  = annotations['geometry'].y
 
-        annotations[["rd_x", "rd_y"]] = annotations.apply(lambda x: self.kernel_generator.get_x_y(x['rd_x'], x['rd_y'] ),axis=1)
+        annotations[["row_x", "column_y"]] = annotations.apply(lambda x: self.kernel_generator.get_x_y(x['rd_x'], x['rd_y'] ),axis=1)
 
         if self.fade == False and self.normalize == False:
-            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']), axis=1)
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.get_kernel_for_x_y(x["row_x"],x["column_y"]), axis=1)
         elif self.fade == True and self.normalize == False:
-            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.get_kernel_for_x_y(x["row_x"],x["column_y"])), axis=1)
         elif self.fade == False and self.normalize == True:
-            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.normalize_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.normalize_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x["row_x"],x["column_y"])), axis=1)
         elif self.fade == True and self.normalize == True:
-            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.normalize_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y']))), axis=1)
+            annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.normalize_tile_kernel(self.kernel_generator.get_kernel_for_x_y(x["row_x"],x["column_y"]))), axis=1)
 
         self.class_kernels = annotations.reset_index()
 

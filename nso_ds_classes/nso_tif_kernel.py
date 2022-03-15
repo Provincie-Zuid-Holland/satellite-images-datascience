@@ -13,6 +13,7 @@ from multiprocessing import Pool
 import itertools
 from timeit import default_timer as timer
 from shapely.geometry import Polygon
+from sklearn import preprocessing
 
 
 """
@@ -94,7 +95,7 @@ class nso_tif_kernel_generator:
         
         copy_kernel = np.zeros(shape=kernel.shape)
         for x in range(0,kernel.shape[0]):
-            copy_kernel[x] = normalizedata(kernel[x]) 
+            copy_kernel[x] = preprocessing.normalize(kernel[x]) 
 
         return copy_kernel
 
