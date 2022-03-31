@@ -280,7 +280,26 @@ class nso_tif_kernel_generator:
                         print(e)
                         return [0,0,0]
 
+    
+    def median_all_pixels(self, steps = 10, begin_part = 0):
 
+
+        total_height = self.get_height() - self.x_size
+
+        height_steps = round(total_height/steps)
+        begin_height = self.x_size_begin
+        end_height = self.x_size_begin+height_steps
+
+        total_height = self.get_height()-self.x_size
+        total_width = self.get_width()-self.y_size
+
+        height_steps = total_height/steps
+
+        # Set some variables for multiprocessing.        
+        dataset = rasterio.open(self.path_to_tif_file)
+ 
+
+    
 
     def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
         """
