@@ -158,12 +158,22 @@ class generic_model:
                 annotations['kernel'] = annotations.apply(lambda x: self.kernel_generator.fadify_kernel(self.kernel_generator.get_kernel_for_x_y(x['rd_x'],x['rd_y'])), axis=1)
 
             return annotations.reset_index()
+
+class waterleiding_ahn_ndvi_model:
+
+    def __init__(self):
+        self.median_annotations = np.load("./annotations/median_annotation.npy")
+    
+    
+        
+        
 class deep_learning_model:
 
 
-    def __init__(self, a_kernel_generator):
+    def __init__(self, a_kernel_generator, bands = 4):
         self.kernel_generator = a_kernel_generator
         self.label_encoder = LabelEncoder()
+        self.bands = 4
 
     def set_standard_convolutional_network(self,size_x_matrix =32 ,size_y_matrix = 32,bands = 4, no_classes =5):
         model = standard_convolutional_network(size_x_matrix,size_y_matrix,bands, no_classes)
@@ -179,7 +189,7 @@ class deep_learning_model:
         y = self.label_encoder.fit_transform(self.annotations['label'].values)
         len_y = len(self.annotations)
 
-        self.model.fit(np.concatenate(self.annotations["kernel"]).reshape(len_y,32,32,4).astype(int),y.reshape(len_y,1), epochs=32)
+        self.model.fit(np.concatenate(self.annotations["kernel"]).reshape(len_y,32,32,self.bands).astype(int),y.reshape(len_y,1), epochs=32)
 
 
     def get_annotations(self, sat_name, path_annotations = "././annotations/coepelduynen_annotations.csv", fade = False):
@@ -211,7 +221,7 @@ class deep_learning_model:
             self.annotations = annotations.reset_index()
 
     def predict(self, akernel):
-        return self.label_encoder.inverse_transform([np.argmax(self.model.predict(np.concatenate(akernel).reshape(1,32,32,4).astype(int)))])[0]
+        return self.label_encoder.inverse_transform([np.argmax(self.model.predict(np.concatenate(akernel).reshape(1,32,32,self.bands).astype(int)))])[0]
 
 
 ### Deep learning models here.
