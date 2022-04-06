@@ -161,10 +161,20 @@ class generic_model:
 
 class waterleiding_ahn_ndvi_model:
 
-    def __init__(self):
+    def __init__(self, a_kernel_generator):
+        self.kernel_generator =  a_kernel_generator
         self.median_annotations = np.load("./annotations/median_annotation.npy")
     
+    def predict(self, kernel,annotations, fade = True):
     
+        if fade == True:
+            return annotations[np.argmin([euclidean_distance_kernels(self.kernel_generator.fadify_kernel(label[1]),\
+                                                                    self.kernel_generator.fadify_kernel(kernel))\
+                for label in annotations])][0]
+        elif fade == False:
+            return annotations[np.argmin([euclidean_distance_kernels(label[1],\
+                                                                    kernel)\
+                    for label in annotations])][0]
         
         
 class deep_learning_model:
