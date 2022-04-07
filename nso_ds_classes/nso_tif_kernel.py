@@ -70,13 +70,15 @@ class nso_tif_kernel_generator:
         self.sat_name = path_to_tif_file.split("/")[-1]
 
 
-    def set_fade_kernel(self, fade_power = 0.045, bands = 4):
+    def set_fade_kernel(self, fade_power = 0.045, bands = 0):
         """
         Creates a fading kernel based on the shape of the other kernels and different parameters.
 
         @param fade_power: the power of the fade kernel.
         @param bands: the number bands that has to be faded.
         """
+        if bands == 0: 
+            bands = self.data.shape[0]
 
         self.fade_kernel = np.array([[(1-(fade_power*max(abs(idx-15),abs(idy-15)))) for idx in range(0,self.x_size)] for idy in range(0,self.y_size)])      
         self.fade_kernel = np.array([self.fade_kernel for id_x in range(0,bands)])
@@ -272,10 +274,12 @@ class nso_tif_kernel_generator:
          try:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
+                        # TODO: Maby select bands in get_kernel_for_x_y
                         kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1])
                         try:
-                            kernel = np.array([ kernel[x] for x in self.bands])
-                        except:
+                            kernel = np.array([ kernel[x-1] for x in self.bands])
+                        except Exception as e:
+                            print(e)
                             print("No bands selected")
                         kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel
                         kernel = self.fadify_kernel(kernel) if self.fade == True else kernel        
@@ -292,7 +296,7 @@ class nso_tif_kernel_generator:
     
 
  
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6]):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False ):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -320,10 +324,16 @@ class nso_tif_kernel_generator:
         # Set some variables for multiprocessing.
         self.set_model(amodel)
         dataset = rasterio.open(self.path_to_tif_file)
-        self.fade = amodel.get_fade()
-        self.normalize = amodel.get_normalize()
+
+        try:
+            self.fade = amodel.get_fade()
+            self.normalize = amodel.get_normalize()
+        except:
+            self.fade = fade
+            self.normalize = normalize
+
         self.bands = bands
-        
+
         # Loop through the steps.
         for x_step in tqdm(range(begin_part,steps)):
             print("-------")
@@ -409,10 +419,12 @@ class nso_tif_kernel_generator:
                             
                        
 
-   
-        if str(type(amodel)) != "<class 'nso_ds_classes.nso_ds_models.deep_learning_model'>":
-            all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
-
+        try:
+            if str(type(amodel)) != "<class 'nso_ds_classes.nso_ds_models.deep_learning_model'>" or str(type(amodel)) == "<class 'nso_ds_classes.nso_ds_models.waterleiding_ahn_ndvi_model'>":
+                all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)
+        except Exception as e:
+            print(e)
+            
         all_part.dissolve(by='label').to_file(output_location)
         
         for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
@@ -517,29 +529,40 @@ class nso_tif_kernel_generator:
             # TODO: Maybe use swifter for this?
             start = timer() 
 
-            
-            
-            #permutations = p.map(self.get_kernel_multi_processing, permutations)
-            #permutations = np.array_split(np.array([permutations]),self.keras_break_size)
-            #print("break size: "+ str(keras_break_size ))
+            multiprocessing = False
 
+            if multiprocessing == True:
+                p = Pool()
+                permutations = np.array(p.map(self.get_kernel_multi_processing, permutations))
+                permutations = permutations[permutations != None]
+
+                print("kernels at first step:")
+                original_shape = permutations.shape[0]
+                print(permutations.shape)
+
+                permutations = np.array_split(permutations,self.keras_break_size)
+                print("after split")
+                print(len(permutations))
+                #print("break size: "+ str(keras_break_size ))
+                permutations = p.map(self.predict_keras_multi_processing,permutations)
+                p.terminate()
            
-            #permutations = p.map(self.predict_keras_multi_processing,permutations)
+            
          
-
-            permutations = np.array([self.get_kernel_multi_processing(permutation) for permutation in permutations],dtype='object')
-        
-            permutations = permutations[permutations != None]
-            print("kernels at first step:")
-            original_shape = permutations.shape[0]
-            print(permutations.shape)
-            permutations = np.array_split(permutations,self.keras_break_size)
-           
-            print("after split")
-            print(len(permutations))
-            permutations = [self.predict_keras_multi_processing(kernels) for kernels in permutations]
-            print("After predict")
-            print(len(permutations))
+            else:
+                permutations = np.array([self.get_kernel_multi_processing(permutation) for permutation in permutations],dtype='object')
+            
+                permutations = permutations[permutations != None]
+                print("kernels at first step:")
+                original_shape = permutations.shape[0]
+                print(permutations.shape)
+                permutations = np.array_split(permutations,self.keras_break_size)
+            
+                print("after split")
+                print(len(permutations))
+                permutations = [self.predict_keras_multi_processing(kernels) for kernels in permutations]
+                print("After predict")
+                print(len(permutations))
 
             permutations = np.concatenate(permutations)
             permutations = permutations.reshape(original_shape,3)

@@ -20,4 +20,4 @@ if __name__ == '__main__':
     
   
     model = keras.models.load_model('C:/repos/satellite-images-nso-datascience/standard_convolutional_network_2019_AWD_RGBI_NDVI_H')   
-    tif_kernel_generator.predict_all_output_multiprocessing_keras(model, out_path , steps = 15, keras_break_size = 1000)
+    tif_kernel_generator.predict_all_output_multiprocessing_keras(model, out_path , steps = 4, keras_break_size = 20000)

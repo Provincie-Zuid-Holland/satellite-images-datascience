@@ -161,20 +161,24 @@ class generic_model:
 
 class waterleiding_ahn_ndvi_model:
 
-    def __init__(self, a_kernel_generator):
+    def __init__(self, a_kernel_generator, fade = False, annotations_np_array = "./annotations/median_annotation.npy"):
         self.kernel_generator =  a_kernel_generator
-        self.median_annotations = np.load("./annotations/median_annotation.npy")
-    
-    def predict(self, kernel,annotations, fade = True):
-    
+        self.median_annotations = np.load(annotations_np_array,allow_pickle=True)
+        self.fade = fade
+
         if fade == True:
-            return annotations[np.argmin([euclidean_distance_kernels(self.kernel_generator.fadify_kernel(label[1]),\
-                                                                    self.kernel_generator.fadify_kernel(kernel))\
-                for label in annotations])][0]
-        elif fade == False:
-            return annotations[np.argmin([euclidean_distance_kernels(label[1],\
-                                                                    kernel)\
-                    for label in annotations])][0]
+            # TODO: Fix the fading.
+            for x_row in range(0, len(self.median_annotations)):
+               self.median_annotations[x_row][1] = self.kernel_generator.fadify_kernel(self.median_annotations[x_row][1])
+    
+    def predict(self, kernel):
+    
+
+        return self.median_annotations[np.argmin([euclidean_distance_kernels(label[1],kernel) for label in self.median_annotations])][0]
+                                                                    
+
+    def get_fade():
+        return self.fade       
         
         
 class deep_learning_model:
