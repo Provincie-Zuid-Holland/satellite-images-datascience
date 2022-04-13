@@ -2,11 +2,11 @@ from locale import normalize
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from keras.models import Sequential
-from keras import layers
-from keras.layers.core import Flatten, Dense, Dropout
-from keras.layers.convolutional import Convolution2D, MaxPooling2D
-from keras.models import load_model
+from tensorflow.keras.models import Sequential
+from tensorflow.keras import layers
+from tensorflow.keras.layers import Flatten, Dense, Dropout
+from tensorflow.keras.layers import Convolution2D, MaxPooling2D
+from tensorflow.keras.models import load_model
 from sklearn.preprocessing import LabelEncoder
 from sqlalchemy import false
 
@@ -173,6 +173,7 @@ class waterleiding_ahn_ndvi_model:
     
     def predict(self, kernel):
     
+        #TODO: Make this code work here:[np.argmax(alabelothot) for alabelothot in self.model.predict(np.concatenate(kernels).reshape(len(kernels),32,32,self.bands))]
 
         return self.median_annotations[np.argmin([euclidean_distance_kernels(label[1],kernel) for label in self.median_annotations])][0]
                                                                     
@@ -180,14 +181,37 @@ class waterleiding_ahn_ndvi_model:
     def get_fade():
         return self.fade       
         
-        
+class oktay_model:
+
+    def __init__(self, model, bands = 4) :
+   
+        self.bands = bands
+        self.model= model
+
+    def predict(self, kernels):
+
+        kernels = np.concatenate(kernels).reshape(len(kernels),32,32,4)
+        predicions = self.model.predict(kernels)
+        labels_predictions = []
+
+        for prediciton in predicions:
+            predictions_cur = []
+            for x in range(0,12):
+                    predictions_cur.append(prediciton[0].T[x].round().sum())
+
+            labels_predictions.append(np.argmax(np.array(predictions_cur)))
+
+        return labels_predictions
+
 class deep_learning_model:
 
 
-    def __init__(self, a_kernel_generator, bands = 4):
+    def __init__(self, a_kernel_generator,  bands = 4):
         self.kernel_generator = a_kernel_generator
         self.label_encoder = LabelEncoder()
-        self.bands = 4
+
+        
+        self.bands = bands 
 
     def set_standard_convolutional_network(self,size_x_matrix =32 ,size_y_matrix = 32,bands = 4, no_classes =5):
         model = standard_convolutional_network(size_x_matrix,size_y_matrix,bands, no_classes)

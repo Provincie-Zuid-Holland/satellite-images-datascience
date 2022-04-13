@@ -20,7 +20,7 @@ from sklearn import preprocessing
 
 
 """
-    This code is used to extract image processing kernels from nso satellite images.
+    This code is used to extract image processing kernels from nso satellite images .tif images
 
     For more information what kernels are: https://en.wikipedia.org/wiki/Kernel_(image_processing)
 
@@ -42,8 +42,8 @@ class nso_tif_kernel_generator:
         Init of the nso tif kernel.
 
         @param path_to_file: A path to a .tif file.
-        @param x_size: the x size of the kernel. For example if x and y are 32 you get a 32x32 kernel.
-        @param y_size: the y size of the kernel. For example if x and y are 32 you get a 32x32 kernel.
+        @param x_size: the x size of the kernel. For example if x and y are 32 you get a 32 by y kernel.
+        @param y_size: the y size of the kernel. For example if x and y are 32 you get a x by 32 kernel.
         """
 
         dataset = rasterio.open(path_to_tif_file)
@@ -53,8 +53,11 @@ class nso_tif_kernel_generator:
 
         self.data = data
 
-        # TODO: Because of multiprocessing we can't stored rasterio datasets.
+        self.bands = data.shape[0]
+        
         self.path_to_tif_file = path_to_tif_file
+
+        # TODO: Because of multiprocessing we can't stored rasterio datasets.
         #self.dataset = dataset
         self.width = width
         self.height = height
@@ -74,6 +77,8 @@ class nso_tif_kernel_generator:
         """
         Creates a fading kernel based on the shape of the other kernels and different parameters.
 
+        A fading kernel uses weights to give other pixel than the center pixel less weight in the prediction.
+
         @param fade_power: the power of the fade kernel.
         @param bands: the number bands that has to be faded.
         """
@@ -88,6 +93,8 @@ class nso_tif_kernel_generator:
 
         Multiply a kernel with the fade kernel, thus fading it.
 
+        A fading kernel uses weights to give other pixel than the center pixel less weight in the prediction.
+
         @param kernel: A kernel you which to  fade.
         @return: A kernel that is faded now.
         """
@@ -96,7 +103,12 @@ class nso_tif_kernel_generator:
 
 
     def normalize_tile_kernel(self, kernel):
+        """
+            Normalize image kernels with sklearn's normalize.
 
+            @param kernel: a kernel to normalize
+        
+        """
         
         copy_kernel = np.zeros(shape=kernel.shape)
         for x in range(0,kernel.shape[0]):
@@ -108,12 +120,21 @@ class nso_tif_kernel_generator:
         """
         Unfade a kernel, for example to plot it again.
 
+        A fading kernel uses weights to give other pixel than the center pixel less weight in the prediction.
+
         @param kernel: A faded kernel that can be unfaded.
         @return: A unfaded kernel.
         """
         return kernel/self.fade_kernel
 
+    def get_pixel_value(self,index_x,index_y):
 
+
+        if sum([band[index_x][index_y] for band in self.data]) == 0:
+            raise ValueError("Center pixel is empty")
+        else:
+            return [band[index_x][index_y] for band in self.data]
+            
     def get_kernel_for_x_y(self,index_x,index_y):
         """
 
@@ -268,13 +289,15 @@ class nso_tif_kernel_generator:
          """
             This function is used to do multiprocessing predicting.
 
+            This needs to be done in a seperate function in order to make multiprocessing work.
+
             @param input_x_y: a array with the row and column for the to be predicted pixel.
             @return row and column and the predicted label in numbers.
          """
          try:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
-                        # TODO: Maby select bands in get_kernel_for_x_y
+                        # TODO: Maybe select bands in get_kernel_for_x_y
                         kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1])
                         try:
                             kernel = np.array([ kernel[x-1] for x in self.bands])
@@ -298,15 +321,18 @@ class nso_tif_kernel_generator:
  
     def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False ):
         """
-            Predict all the pixels in the .tif file with kernels per pixel.
+            Predict all the pixels in the .tif file with a kernel per pixel.
 
             Uses multiprocessing to speed up the results.
 
-            @param amodel: A prediciton model with has to have a predict function.
-            @param output_location: Locatie where to writes the results too.
-            @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m
-            @param steps: break the .tif file in multiple steps this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory.
-            @param begin_part: skip certain parts in the steps
+            @param amodel: A prediciton model with has to have a predict function and uses kernels as input.
+            @param output_location: Location where to writes the results too.
+            @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m.
+            @param steps: break the .tif file in multiple parts, this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory thus we divide a .tif file in multiple parts.
+            @param begin_part: skip certain parts in the steps.
+            @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
+            @param fade: Whether to use fading kernels or not.
+            @param normalize: Whether to use normalize all the kernels or not.
         """
         
         # Set some variables for breaking the .tif in different part steps in order to save memory.
@@ -434,8 +460,11 @@ class nso_tif_kernel_generator:
          """
             This function is used to do multiprocessing predicting.
 
+            This will get all the kernels first to be predicted later with a keras prediction function.
+            Keras performs better when you give it multiple inputs instead of one.
+
             @param input_x_y: a array with the row and column for the to be predicted pixel.
-            @return row and column and the predicted label in numbers.
+            @return row and column and the kernel.
          """
          try:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
@@ -455,14 +484,22 @@ class nso_tif_kernel_generator:
                         #return [0,0,0]
 
     def predict_keras_multi_processing(self, input_x_y_kernel):
+        """
+            This function is used to do multiprocessing predicting.
 
+            Prediction function for keras models
+
+            @param input_x_y: a array of kernels for keras predict to use.
+            @return row and column and the predicted label in numbers.
+         """
         try:
                 
                 # Fetches the real coordinates for the row and column needed for writing to a geoformat.               
                 kernels = [arow[2] for arow  in input_x_y_kernel]
                 
                 # TODO: Fix bands and labels
-                predicts = [np.argmax(alabelothot) for alabelothot in self.model.predict(np.concatenate(kernels).reshape(len(kernels),32,32,6))]
+                predicts = self.model.predict(kernels)
+                print(predicts)
 
                 row_id = 0
                 returns = []
@@ -472,13 +509,15 @@ class nso_tif_kernel_generator:
                 return returns
 
         except ValueError as e:
+                        print("Error in multiprocessing prediction:")
                         print(e)
                         #return [0,0,0]
         except Exception as e:
+                        print("Error in multiprocessing prediction:")
                         print(e)
                         #return [0,0,0]
 
-    def predict_all_output_multiprocessing_keras(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, keras_break_size = 10000):
+    def predict_all_output_multiprocessing_keras(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, keras_break_size = 10000,  multiprocessing = False):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -528,13 +567,15 @@ class nso_tif_kernel_generator:
             # Init the multiprocessing pool.
             # TODO: Maybe use swifter for this?
             start = timer() 
-
-            multiprocessing = False
+            print("Getting kernels")
+          
 
             if multiprocessing == True:
+               
                 p = Pool()
                 permutations = np.array(p.map(self.get_kernel_multi_processing, permutations))
                 permutations = permutations[permutations != None]
+                p.terminate()
 
                 print("kernels at first step:")
                 original_shape = permutations.shape[0]
@@ -544,94 +585,106 @@ class nso_tif_kernel_generator:
                 print("after split")
                 print(len(permutations))
                 #print("break size: "+ str(keras_break_size ))
+                p = Pool()
                 permutations = p.map(self.predict_keras_multi_processing,permutations)
                 p.terminate()
            
             
          
             else:
+
+              
                 permutations = np.array([self.get_kernel_multi_processing(permutation) for permutation in permutations],dtype='object')
-            
-                permutations = permutations[permutations != None]
+                print(permutations)
+                #permutations = permutations[permutations != None]
                 print("kernels at first step:")
                 original_shape = permutations.shape[0]
                 print(permutations.shape)
-                permutations = np.array_split(permutations,self.keras_break_size)
+                array_split_size = round(permutations.shape[0]/self.keras_break_size)
+                permutations = np.array_split(permutations, array_split_size)
             
-                print("after split")
+                print("After split")
                 print(len(permutations))
+                print("With size:")
+                print(len(permutations[0]))
+                print("Predicting")
                 permutations = [self.predict_keras_multi_processing(kernels) for kernels in permutations]
                 print("After predict")
                 print(len(permutations))
+                print(permutations)
 
-            permutations = np.concatenate(permutations)
-            permutations = permutations.reshape(original_shape,3)
+            try:
+                permutations = np.concatenate(permutations)
+                permutations = permutations.reshape(original_shape,3)
 
+                
+                print("Pool finised in: "+str(timer()-start)+" second(s)")
             
-            print("Pool finised in: "+str(timer()-start)+" second(s)")
-         
-           
-            start = timer() 
-            seg_df = pd.DataFrame(permutations, columns = ['x_cor','y_cor','label'])
-            del permutations
-            seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
-            print(seg_df)
-            print("Number of used pixels for this step: "+str(len(seg_df)))
-            if len(seg_df) > 0:
-                
-
-                # Get the coordinates for the pixel locations.           
-                seg_df['rd_x'],seg_df['rd_y'] = rasterio.transform.xy(dataset.transform,seg_df['x_cor'], seg_df['y_cor'])
-                
-                print("Got coordinates for pixels: "+str(timer()-start)+" second(s)")
-
-                seg_df = seg_df.drop(['y_cor','x_cor'], axis=1)
-                
-
+            
                 start = timer() 
-                if aggregate_output == True:
-                    seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
-                    seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
-                    seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('label', \
-                                                            lambda x: x.value_counts().index[0]))
-                    print("Group by finised in: "+str(timer()-start)+" second(s)")
+                seg_df = pd.DataFrame(permutations, columns = ['x_cor','y_cor','label'])
+                del permutations
+                seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
+                print(seg_df)
+                print("Number of used pixels for this step: "+str(len(seg_df)))
+                
+                if len(seg_df) > 0:
                     
+
+                    # Get the coordinates for the pixel locations.           
+                    seg_df['rd_x'],seg_df['rd_y'] = rasterio.transform.xy(dataset.transform,seg_df['x_cor'], seg_df['y_cor'])
+                    
+                    print("Got coordinates for pixels: "+str(timer()-start)+" second(s)")
+
+                    seg_df = seg_df.drop(['y_cor','x_cor'], axis=1)
+                    
+
                     start = timer() 
-                    seg_df["rd_x"] = list(map(lambda x: x[0], seg_df.index))
-                    seg_df["rd_y"] = list(map(lambda x: x[1], seg_df.index))
-                    print("Labels created in: "+str(timer()-start)+" second(s)")
+                    if aggregate_output == True:
+                        seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
+                        seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
+                        seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('label', \
+                                                                lambda x: x.value_counts().index[0]))
+                        print("Group by finised in: "+str(timer()-start)+" second(s)")
+                        
+                        start = timer() 
+                        seg_df["rd_x"] = list(map(lambda x: x[0], seg_df.index))
+                        seg_df["rd_y"] = list(map(lambda x: x[1], seg_df.index))
+                        print("Labels created in: "+str(timer()-start)+" second(s)")
+                        
+                        seg_df= seg_df[["rd_x","rd_y","label"]]
+
+                    start = timer()  
                     
-                    seg_df= seg_df[["rd_x","rd_y","label"]]
+                    # Make squares from the the pixels in order to make contected polygons from them.
+                    p = Pool()
+                    seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
+                    
+                    p.terminate()
+                    seg_df= seg_df[["geometry","label"]]
 
-                start = timer()  
+                    # Store the results in a geopandas dataframe.
+                    seg_df = gpd.GeoDataFrame(seg_df, geometry=seg_df.geometry)
+                    seg_df = seg_df.set_crs(epsg = 28992)
+                    print("Geometry made in: "+str(timer()-start)+" second(s)")
+                    try:
+                        nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
+                        print(output_location.replace(".","_part_"+str(x_step)+"."))
+                    except:
+                        print("Warning nothing has been written")
+
+                    print("Writing finised in: "+str(timer()-start)+" second(s)")
+                    print(seg_df.columns)
+                    del seg_df
+                    begin_height = int(round(end_height+1))
+                    end_height = int(round(begin_height+height_steps))
                 
-                # Make squares from the the pixels in order to make contected polygons from them.
-                p = Pool()
-                seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
-                
-                p.terminate()
-                seg_df= seg_df[["geometry","label"]]
-
-                # Store the results in a geopandas dataframe.
-                seg_df = gpd.GeoDataFrame(seg_df, geometry=seg_df.geometry)
-                seg_df = seg_df.set_crs(epsg = 28992)
-                print("Geometry made in: "+str(timer()-start)+" second(s)")
-                try:
-                    nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
-                    print(output_location.replace(".","_part_"+str(x_step)+"."))
-                except:
-                    print("Warning nothing has been written")
-
-                print("Writing finised in: "+str(timer()-start)+" second(s)")
-                print(seg_df.columns)
-                del seg_df
-                begin_height = int(round(end_height+1))
-                end_height = int(round(begin_height+height_steps))
-            
-                if end_height > self.get_height() - (self.x_size/2):
-                    end_height = round(self.get_height() - (self.x_size/2))
-            else:
-                print("WARNING! Empty DataFrame!")
+                    if end_height > self.get_height() - (self.x_size/2):
+                        end_height = round(self.get_height() - (self.x_size/2))
+                else:
+                    print("WARNING! Empty DataFrame!")
+            except Exception as e:
+                print(e)
         
         all_part = 0
         first_check = 0
