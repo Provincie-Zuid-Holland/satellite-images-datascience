@@ -298,7 +298,7 @@ class nso_tif_kernel_generator:
                         # Fetches the real coordinates for the row and column needed for writing to a geoformat.
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
                         # TODO: Maybe select bands in get_kernel_for_x_y
-                        kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1])
+                        kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1]) if self.pixel_values == False else self.get_pixel_value(input_x_y[0],input_x_y[1])
                         try:
                             kernel = np.array([ kernel[x-1] for x in self.bands])
                         except Exception as e:
@@ -319,7 +319,7 @@ class nso_tif_kernel_generator:
     
 
  
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False ):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False, pixel_values = False ):
         """
             Predict all the pixels in the .tif file with a kernel per pixel.
 
@@ -334,7 +334,8 @@ class nso_tif_kernel_generator:
             @param fade: Whether to use fading kernels or not.
             @param normalize: Whether to use normalize all the kernels or not.
         """
-        
+        #TODO: Export all variables to other sections.
+
         # Set some variables for breaking the .tif in different part steps in order to save memory.
         total_height = self.get_height() - self.x_size
 
@@ -357,7 +358,8 @@ class nso_tif_kernel_generator:
         except:
             self.fade = fade
             self.normalize = normalize
-
+        
+        self.pixel_values = pixel_values 
         self.bands = bands
 
         # Loop through the steps.

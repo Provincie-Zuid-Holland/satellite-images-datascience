@@ -15,4 +15,9 @@ class nso_tif_sampler:
 
         for x_samp in range(0, len(height_sample)):
 
-            return_samples.append(self.kernel_generator.get_pixel_value(height_sample[x_samp], width_sample[x_samp]))
+            try:
+                return_samples.append(self.kernel_generator.get_pixel_value(height_sample[x_samp], width_sample[x_samp]))
+            except:
+                print("Empty value")
+
+        return return_samples

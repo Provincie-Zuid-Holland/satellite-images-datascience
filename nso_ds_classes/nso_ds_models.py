@@ -262,6 +262,17 @@ class deep_learning_model:
         return self.label_encoder.inverse_transform([np.argmax(self.model.predict(np.concatenate(akernel).reshape(1,32,32,self.bands).astype(int)))])[0]
 
 
+
+class cluster_annotations_stats_model():
+
+    def __init__(self):
+
+        # TODO: Read a parametered file.
+        self.cluster_centers = pd.read_csv("cluster_stats_labels.csv")
+
+    def predict(self, pixel_value):
+        return self.cluster_centers['labels'][self.cluster_centers[["band1","band2","band3","band4","band5","band6"]].apply(lambda x:euclidean_distance_kernels(pixel_value,x.values),axis=1).idxmin()]
+
 ### Deep learning models here.
 def standard_convolutional_network(size_x_matrix =32 ,size_y_matrix = 32,bands = 4, no_classes =5):
 
