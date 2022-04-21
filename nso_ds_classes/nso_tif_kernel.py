@@ -299,18 +299,22 @@ class nso_tif_kernel_generator:
                         #actual_cor = self.get_x_cor_y_cor(x,y)  
                         # TODO: Maybe select bands in get_kernel_for_x_y
                         kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1]) if self.pixel_values == False else self.get_pixel_value(input_x_y[0],input_x_y[1])
-                        try:
-                            kernel = np.array([ kernel[x-1] for x in self.bands])
-                        except Exception as e:
-                            print(e)
-                            print("No bands selected")
-                        kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel
-                        kernel = self.fadify_kernel(kernel) if self.fade == True else kernel        
                         
+                        # TODO: Fix the extra checking.
+                        #try:
+                        #    kernel = np.array([ kernel[x-1] for x in self.bands])
+                        #except Exception as e:
+                        #    print(e)
+                        #    print("No bands selected")
+                        #kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel
+                        #kernel = self.fadify_kernel(kernel) if self.fade == True else kernel        
+                        
+                        label = self.model.predict(kernel)
+                        return [input_x_y[0], input_x_y[1], label]
 
-                        return [input_x_y[0], input_x_y[1], self.model.predict(kernel)]
-
-         except ValueError as e:
+         except ValueError as e:                  
+                        if str(e) != "Center pixel is empty":                          
+                            print(e)
                         return [0,0,0]
          except Exception as e:
                         print(e)
@@ -375,7 +379,7 @@ class nso_tif_kernel_generator:
             start = timer() 
             p = Pool()
             seg_df = p.map(self.func_multi_processing,permutations)
-            
+          
 
             del permutations
 

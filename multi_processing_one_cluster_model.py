@@ -1,7 +1,9 @@
 import nso_ds_classes.nso_tif_kernel as nso_tif_kernel
 import nso_ds_classes.nso_ds_models as nso_ds_models
 import glob
-
+from nso_ds_classes.nso_ds_models import cluster_annotations_stats_model 
+import nso_ds_classes.nso_ds_cluster as nso_ds_cluster 
+from os.path import exists
 
 
 if __name__ == '__main__':
@@ -11,17 +13,23 @@ if __name__ == '__main__':
     y_kernel_height = 32
 
 
-    #path_to_tif_file = "E:/data/coepelduynen/20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.tif"
-    #out_path = "E:/output/Coepelduynen_segmentations/20211226_103526_SV1-01_SV_RD_11bit_RGBI_50cm_KatwijkAanZee_natura2000_coepelduynen_cropped.shp"
-    path_to_tif_file = "E:/data/coepelduynen/20200625_112015_SV1-03_SV_RD_11bit_RGBI_50cm_Rijnsburg_natura2000_coepelduynen_cropped_ndvi_height.tif"
-    out_path = "E:/output/Coepelduynen_segmentations/20200625_112015_SV1-03_SV_RD_11bit_RGBI_50cm_Rijnsburg_natura2000_coepelduynen_cropped_ndvi_height_ec_distance.shp"
-    tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
+    for file in glob.glob("E:/data/coepelduynen/*ndvi_height.tif"):
 
-    tif_kernel_generator.set_fade_kernel(bands=6)
+        path_to_tif_file = file.replace("\\","/")
+        out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
+        tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
 
-    euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_generator, normalize=True)
-    euclidean_distance_model.set_ec_distance_custom_annotations()
-    
-
+        cluster_centers_file = "./"+path_to_tif_file.split("/")[-1].split(".tif")[0]+"_normalised_cluster_centers.csv"
         
-    tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model, out_path , steps = 3)
+        if exists(cluster_centers_file) is False:
+
+            a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
+            a_nso_cluster_break.make_clusters_centers(cluster_centers_file)
+        else:
+            print("Previous cluster centers found")
+
+        #cluster_centers_file = cluster_centers_file
+        #a_cluster_annotations_stats_model = cluster_annotations_stats_model(cluster_centers_file)
+
+            
+       # tif_kernel_generator.predict_all_output_multiprocessing(a_cluster_annotations_stats_model, out_path , steps = 3, pixel_values=True)

@@ -2,11 +2,7 @@ from locale import normalize
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from tensorflow.keras.models import Sequential
-from tensorflow.keras import layers
-from tensorflow.keras.layers import Flatten, Dense, Dropout
-from tensorflow.keras.layers import Convolution2D, MaxPooling2D
-from tensorflow.keras.models import load_model
+import os
 from sklearn.preprocessing import LabelEncoder
 from sqlalchemy import false
 
@@ -184,6 +180,12 @@ class waterleiding_ahn_ndvi_model:
 class oktay_model:
 
     def __init__(self, model, bands = 4) :
+
+        from tensorflow.keras.models import Sequential
+        from tensorflow.keras import layers
+        from tensorflow.keras.layers import Flatten, Dense, Dropout
+        from tensorflow.keras.layers import Convolution2D, MaxPooling2D
+        from tensorflow.keras.models import load_model
    
         self.bands = bands
         self.model= model
@@ -207,6 +209,12 @@ class deep_learning_model:
 
 
     def __init__(self, a_kernel_generator,  bands = 4):
+
+        from tensorflow.keras.models import Sequential
+        from tensorflow.keras import layers
+        from tensorflow.keras.layers import Flatten, Dense, Dropout
+        from tensorflow.keras.layers import Convolution2D, MaxPooling2D
+        from tensorflow.keras.models import load_model
         self.kernel_generator = a_kernel_generator
         self.label_encoder = LabelEncoder()
 
@@ -265,13 +273,31 @@ class deep_learning_model:
 
 class cluster_annotations_stats_model():
 
-    def __init__(self):
+    def __init__(self, cluster_centers_file_name = "./cluster_stats_labels.csv"):
 
         # TODO: Read a parametered file.
-        self.cluster_centers = pd.read_csv("cluster_stats_labels.csv")
+        cwd = os.getcwd()
+        self.cluster_centers = pd.read_csv(cluster_centers_file_name)
 
-    def predict(self, pixel_value):
-        return self.cluster_centers['labels'][self.cluster_centers[["band1","band2","band3","band4","band5","band6"]].apply(lambda x:euclidean_distance_kernels(pixel_value,x.values),axis=1).idxmin()]
+    #  Slow way of predicting might be faster withou
+    #def predict(self, pixel_value):
+    #    return self.cluster_centers['labels'][self.cluster_centers[["band1","band2","band3","band4","band5","band6"]].apply(lambda x:euclidean_distance_kernels(pixel_value,x.values),axis=1).idxmin()]
+
+
+    def predict(self,kernel):
+        """
+        Predict the class of a kernel based on annotations.
+
+        @param kernel: A kernel to be predicted.
+        @return: class in int type of the class.
+        """
+        kernel = [kernel[2],kernel[4], kernel[5]]
+        return np.argmin([euclidean_distance_kernels(x,kernel)  for x in self.cluster_centers[["band3","band5","band6"]].values])
+
+    def get_class_label(self,index):
+
+        return self.cluster_centers[self.cluster_centers.index == int(index)]['labels'].values[0]
+
 
 ### Deep learning models here.
 def standard_convolutional_network(size_x_matrix =32 ,size_y_matrix = 32,bands = 4, no_classes =5):
