@@ -19,17 +19,25 @@ if __name__ == '__main__':
         out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
         tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
 
-        cluster_centers_file = "./"+path_to_tif_file.split("/")[-1].split(".tif")[0]+"_normalised_cluster_centers.csv"
+       # cluster_centers_file = "./"+path_to_tif_file.split("/")[-1].split(".tif")[0]+"_normalised_cluster_centers.csv"
         
-        if exists(cluster_centers_file) is False:
+       # if exists(cluster_centers_file) is False:
 
-            a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
-            a_nso_cluster_break.make_clusters_centers(cluster_centers_file)
-        else:
-            print("Previous cluster centers found")
-
+        #    
+        #    a_nso_cluster_break.make_clusters_centers(cluster_centers_file)
+       # else:
+        #    print("Previous cluster centers found")
+        
+        #a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
+        #a_nso_cluster_break.get_stepped_pixel_df(output_name = path_to_tif_file.split("/")[-1], steps=2, begin_part=1, multiprocessing= True)
+        
         #cluster_centers_file = cluster_centers_file
-        #a_cluster_annotations_stats_model = cluster_annotations_stats_model(cluster_centers_file)
+        
+        cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
+        a_cluster_annotations_stats_model = cluster_annotations_stats_model(cluster_centers_file, scaler_file_band3 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save", \
+                                                                            scaler_file_band5 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band5.save", \
+                                                                            scaler_file_band6 = "./scalers/ahn4.save",
+             )
 
             
-       # tif_kernel_generator.predict_all_output_multiprocessing(a_cluster_annotations_stats_model, out_path , steps = 3, pixel_values=True)
+        tif_kernel_generator.predict_all_output_multiprocessing(a_cluster_annotations_stats_model, out_path , steps = 3, pixel_values=True)

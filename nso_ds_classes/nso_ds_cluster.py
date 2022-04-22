@@ -9,7 +9,21 @@ from yellowbrick.cluster import KElbowVisualizer
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from nso_ds_classes.nso_ds_models import euclidean_distance_kernels
-from sklearn.externals import joblib
+import joblib
+from os.path import exists
+
+
+class normalize_scaler_class_BNDVIH:
+    
+    def __init__(self, scaler_file_band3 = "",scaler_file_band5 = "", scaler_file_band6 = "") :
+        
+        self.scaler_band3 = joblib.load(scaler_file_band3)
+        self.scaler_band5 = joblib.load(scaler_file_band5)
+        self.scaler_band6 = joblib.load(scaler_file_band6)
+
+    def transform(pixel_df):
+        
+
 
 class nso_cluster_break:
 
@@ -51,7 +65,8 @@ class nso_cluster_break:
 
 
 
-        def retrieve_stepped_cluster_centers(self,steps=10, begin_part=0, multiprocessing = False,output_name = "" ):
+
+        def get_stepped_pixel_df(self,steps=10, begin_part=0, multiprocessing = False, output_name = ""):
 
             total_height = self.kernel_generator.get_height() - self.kernel_generator.x_size
 
@@ -78,6 +93,7 @@ class nso_cluster_break:
                 if multiprocessing == True:
                     p = Pool()
                     pixel_df = p.map(self.get_pixel_multiprocessing ,permutations)
+                    p.terminate()
                 else:
                     pixel_df = [ self.get_pixel_multiprocessing(permutation) for permutation in permutations]
 
@@ -87,25 +103,45 @@ class nso_cluster_break:
                 pixel_df= [elem for elem in pixel_df if elem is not None]
 
                 pixel_df = pd.DataFrame(pixel_df, columns= ["band1","band2","band3","band4","band5","band6"])
+                pixel_df = self.make_normalized_clusters(pixel_df, output_name)
 
+            return pixel_df
+
+        def make_normalized_clusters(self, pixel_df,output_name ):
+
+
+
+            band3_scaler = MinMaxScaler().fit(pixel_df['band3'].values.reshape(-1, 1))
+            joblib.dump(band3_scaler,"./scalers/"+output_name+"_band3.save") 
+            pixel_df['band3'] = band3_scaler.transform(pixel_df['band3'].values.reshape(-1, 1))
+            
+
+            band5_scaler = MinMaxScaler().fit(pixel_df['band5'].values.reshape(-1, 1))
+            joblib.dump(band5_scaler, "./scalers/"+output_name+"_band5.save") 
+            pixel_df['band5'] = band5_scaler.transform(pixel_df['band5'].values.reshape(-1, 1))
+
+
+            ahn4_scaler = "./scalers/ahn4.save"
+            if exists(ahn4_scaler):
+                 
+                    band6_scaler= joblib.load(ahn4_scaler) 
+            else:
+                    band6_scaler = MinMaxScaler().fit(pixel_df['band6'].values.reshape(-1, 1))               
+                    joblib.dump(band6_scaler,"./scalers/ahn4.save") 
+
+            pixel_df['band6'] = band6_scaler.transform(pixel_df['band6'].values.reshape(-1, 1))
+
+            return pixel_df
+
+
+        def retrieve_stepped_cluster_centers(self,output_name = ""):
+
+            
                 #pixel_df['band1'] =MinMaxScaler().fit_transform(pixel_df['band1'].values.reshape(-1, 1) )
                 #pixel_df['band2'] =MinMaxScaler().fit_transform(pixel_df['band2'].values.reshape(-1, 1) )
-                band3_scaler = MinMaxScaler().fit(pixel_df['band3'].values.reshape(-1, 1))
-                pixel_df['band3'] = band3_scaler.transform(pixel_df['band3'].values.reshape(-1, 1))
-                joblib.dump(band3_scaler,"./scalers/"+output_name+"_band3.save") 
-
-                #pixel_df['band4'] =MinMaxScaler().fit_transform(pixel_df['band4'].values.reshape(-1, 1) )
-                band5_scaler = MinMaxScaler().fit(pixel_df['band5'].values.reshape(-1, 1))
-                pixel_df['band5'] = band5_scaler.transform(pixel_df['band5'].values.reshape(-1, 1))
-
-                joblib.dump(band5_scaler, output_name+"./scalers/"+output_name+"_band5.save") 
-
-
-                band6_scaler = MinMaxScaler().fit(pixel_df['band6'].values.reshape(-1, 1))
-                pixel_df['band6'] = band5_scaler.transform(pixel_df['band6'].values.reshape(-1, 1))
-
-                joblib.dump(band6_scaler,"./scalers/ahn4.save") 
-
+               
+                
+                clusters_centers = []
                 try:
                     pixel_df = pixel_df[['band3','band5', 'band6']].values
 
@@ -122,4 +158,4 @@ class nso_cluster_break:
                 except Exception as e:
                     print(e)
             
-            return clusters_centers
+                return clusters_centers
