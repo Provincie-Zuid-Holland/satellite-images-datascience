@@ -274,15 +274,12 @@ class deep_learning_model:
 
 class cluster_annotations_stats_model():
 
-    def __init__(self, cluster_centers_file_name = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv", scaler_file_band3 = "",scaler_file_band5 = "", scaler_file_band6 = ""):
+    def __init__(self, cluster_centers_file_name = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"):
 
         # TODO: Read a parametered file.
         
         self.cluster_centers = pd.read_csv(cluster_centers_file_name)
         
-        self.scaler_band3 = joblib.load(scaler_file_band3)
-        self.scaler_band5 = joblib.load(scaler_file_band5)
-        self.scaler_band6 = joblib.load(scaler_file_band6)
 
     #  Slow way of predicting might be faster withou
     #def predict(self, pixel_value):
@@ -297,7 +294,6 @@ class cluster_annotations_stats_model():
         @return: class in int type of the class.
         """
         
-        kernel = np.array([self.scaler_band3.transform(np.array(kernel[2]).reshape(-1,1))[0][0], self.scaler_band5.transform(np.array(kernel[4]).reshape(-1,1))[0][0], self.scaler_band6.transform(np.array(kernel[5]).reshape(-1,1))[0][0] ])
         return np.argmin([euclidean_distance_kernels(x,kernel) for x in self.cluster_centers[["band3","band5","band6"]].values ])
 
     def get_class_label(self,index):

@@ -2,6 +2,7 @@ import nso_ds_classes.nso_tif_kernel as nso_tif_kernel
 import nso_ds_classes.nso_ds_models as nso_ds_models
 import glob
 from nso_ds_classes.nso_ds_models import cluster_annotations_stats_model 
+from nso_ds_classes.nso_ds_cluster import normalize_scaler_class_BNDVIH 
 import nso_ds_classes.nso_ds_cluster as nso_ds_cluster 
 from os.path import exists
 
@@ -34,10 +35,11 @@ if __name__ == '__main__':
         #cluster_centers_file = cluster_centers_file
         
         cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
-        a_cluster_annotations_stats_model = cluster_annotations_stats_model(cluster_centers_file, scaler_file_band3 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save", \
+        a_cluster_annotations_stats_model = cluster_annotations_stats_model(cluster_centers_file)
+
+        a_normalize_scaler_class_BNDVIH = normalize_scaler_class_BNDVIH( "./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save", \
                                                                             scaler_file_band5 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band5.save", \
-                                                                            scaler_file_band6 = "./scalers/ahn4.save",
-             )
+                                                                            scaler_file_band6 = "./scalers/ahn4.save")
 
             
-        tif_kernel_generator.predict_all_output_multiprocessing(a_cluster_annotations_stats_model, out_path , steps = 3, pixel_values=True)
+        tif_kernel_generator.predict_all_output_multiprocessing(a_cluster_annotations_stats_model, out_path , steps = 3, pixel_values=True, normalize= a_normalize_scaler_class_BNDVIH )

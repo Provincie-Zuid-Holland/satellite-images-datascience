@@ -285,7 +285,7 @@ class nso_tif_kernel_generator:
             os.remove(file)
 
 
-    def func_multi_processing(self, input_x_y):
+    def func_multi_processing_get_kernels(self, input_x_y):
          """
             This function is used to do multiprocessing predicting.
 
@@ -309,8 +309,8 @@ class nso_tif_kernel_generator:
                         #kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel
                         #kernel = self.fadify_kernel(kernel) if self.fade == True else kernel        
                         
-                        label = self.model.predict(kernel)
-                        return [input_x_y[0], input_x_y[1], label]
+                        
+                        return  kernel
 
          except ValueError as e:                  
                         if str(e) != "Center pixel is empty":                          
@@ -320,8 +320,21 @@ class nso_tif_kernel_generator:
                         print(e)
                         return [0,0,0]
 
-    
+    def func_multi_processing_predict(self, input_x_y):
 
+        try:
+
+            label = self.model.predict(input_x_y)
+            return [input_x_y[6][0], input_x_y[6][1], label]
+
+        except ValueError as e:                  
+                        if str(e) != "Center pixel is empty":                          
+                            print(e)
+                        return [0,0,0]
+        except Exception as e:
+                        print(e)
+                        return [0,0,0]
+        
  
     def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False, pixel_values = False ):
         """
@@ -378,14 +391,28 @@ class nso_tif_kernel_generator:
             # TODO: Maybe use swifter for this?
             start = timer() 
             p = Pool()
-            seg_df = p.map(self.func_multi_processing,permutations)
+            seg_df = p.map(self.func_multi_processing_get_kernels,permutations)
+            print("Pool kernel fetching finised in: "+str(timer()-start)+" second(s)")
           
+            
+
+           
+            seg_df = pd.DataFrame(seg_df, columns= ["band1","band2","band3","band4","band5","band6"])
+
+            if normalize is not False:
+                seg_df = normalize.transform(seg_df)
+
+            seg_df["permutation"] = permutations
+            seg_df = seg_df.values
 
             del permutations
-
-            print("Pool finised in: "+str(timer()-start)+" second(s)")
          
             start = timer() 
+
+            seg_df = p.map(self.func_multi_processing_predict,seg_df)
+
+            print("Predicting finised in: "+str(timer()-start)+" second(s)")
+
             seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','label'])
             seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
             print("Number of used pixels for this step: "+str(len(seg_df)))
