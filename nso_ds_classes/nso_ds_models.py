@@ -278,7 +278,8 @@ class cluster_annotations_stats_model():
 
         # TODO: Read a parametered file.
         
-        self.cluster_centers = pd.read_csv(cluster_centers_file_name)
+        self.cluster_centers = np.array(pd.read_csv(cluster_centers_file_name)[["band3","band5","band6"]].values)
+        self.labels = pd.read_csv(cluster_centers_file_name)
         
 
     #  Slow way of predicting might be faster withou
@@ -294,11 +295,11 @@ class cluster_annotations_stats_model():
         @return: class in int type of the class.
         """
         
-        return np.argmin([euclidean_distance_kernels(x,kernel) for x in self.cluster_centers[["band3","band5","band6"]].values ])
+        return np.argmin([euclidean_distance_kernels(x,kernel) for x in self.cluster_centers ])
 
     def get_class_label(self,index):
 
-        return self.cluster_centers[self.cluster_centers.index == int(index)]['label'].values[0]
+        return self.labels[self.labels.index == int(index)]['label'].values[0]
 
 
 ### Deep learning models here.

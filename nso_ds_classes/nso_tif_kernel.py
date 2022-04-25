@@ -324,7 +324,8 @@ class nso_tif_kernel_generator:
 
         try:
 
-            label = self.model.predict(input_x_y)
+            # TODO: Make the bands selected able
+            label = self.model.predict([input_x_y[2],input_x_y[4], input_x_y[5]])
             return [input_x_y[6][0], input_x_y[6][1], label]
 
         except ValueError as e:                  
@@ -400,11 +401,14 @@ class nso_tif_kernel_generator:
             seg_df = pd.DataFrame(seg_df, columns= ["band1","band2","band3","band4","band5","band6"])
 
             if normalize is not False:
+                print("Normalizing data")
                 seg_df = normalize.transform(seg_df)
+            
 
             seg_df["permutation"] = permutations
+            seg_df = seg_df.dropna()
+            
             seg_df = seg_df.values
-
             del permutations
          
             start = timer() 
