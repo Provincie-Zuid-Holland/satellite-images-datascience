@@ -20,4 +20,4 @@ if __name__ == '__main__':
     
   
     model = load_model('C:/repos/satellite-images-nso-datascience/grayscale_model.h5')   
-    tif_kernel_generator.predict_all_output_multiprocessing_keras(model, out_path , steps = 10, keras_break_size = 10000)
+    tif_kernel_generator.predict_all_output_multiprocessing_keras(model, out_path , parts = 10, keras_break_size = 10000)

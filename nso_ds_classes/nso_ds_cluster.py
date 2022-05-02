@@ -55,7 +55,7 @@ class nso_cluster_break:
             annotations_stats = pd.read_csv("./annotations/median_stats_annotations.csv")
             annotations_stats = annotations_stats[["MEDIAN_band1_normalized","MEDIAN_band2_normalized","MEDIAN_band3_normalized","MEDIAN_band4_normalized","MEDIAN_height_normalized","MEDIAN_ndvi_normalized", "Label"]]
 
-            cluster_centers = self.retrieve_stepped_cluster_centers(steps=2,begin_part=1, output_name = a_output_name)
+            cluster_centers = self.retrieve_stepped_cluster_centers(parts=2,begin_part=1, output_name = a_output_name)
             cluster_centers_df = pd.DataFrame(cluster_centers[0], columns =["band3","band5","band6"])
 
 
@@ -71,24 +71,33 @@ class nso_cluster_break:
 
 
 
-        def get_stepped_pixel_df(self,steps=10, begin_part=0, multiprocessing = False, output_name = ""):
+        def make_scaler_stepped_pixel_df(self,parts=10, begin_part=0, multiprocessing = False, output_name = ""):
+            """
+            
+            This function makes a scaler on bands in a .tif file, which can be based on parts of a .tif file instead of the whole file.
+
+
+            @param parts: The number of parts of which to divide a .tif file into.
+            
+            
+            """
 
             total_height = self.kernel_generator.get_height() - self.kernel_generator.x_size
 
-            height_steps = round(total_height/steps)
+            height_parts = round(total_height/parts)
             begin_height = self.kernel_generator.x_size_begin
-            end_height = self.kernel_generator.x_size_begin+height_steps
+            end_height = self.kernel_generator.x_size_begin+height_parts
 
             total_height = self.kernel_generator.get_height()-self.kernel_generator.x_size
             total_width = self.kernel_generator.get_width()-self.kernel_generator.y_size
 
-            height_steps = total_height/steps
+            height_parts = total_height/parts
 
             clusters_centers = []
-            # Loop through the steps.
-            for x_step in tqdm.tqdm(range(begin_part,steps)):
+            # Loop through the parts.
+            for x_step in tqdm.tqdm(range(begin_part,parts)):
                 print("-------")
-                print("Part: "+str(x_step+1)+" of "+str(steps))
+                print("Part: "+str(x_step+1)+" of "+str(parts))
                 # Calculate the number of permutations for this step.
                 permutations = list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.kernel_generator.y_size_begin, self.kernel_generator.get_width()-self.kernel_generator.y_size_end)]))
                 print("Total permutations this step: "+str(len(permutations)))
@@ -108,11 +117,11 @@ class nso_cluster_break:
                 pixel_df= [elem for elem in pixel_df if elem is not None]
 
                 pixel_df = pd.DataFrame(pixel_df, columns= ["band1","band2","band3","band4","band5","band6"])
-                pixel_df = self.make_normalized_clusters(pixel_df, output_name)
+                pixel_df = self.make_normalized_scaler(pixel_df, output_name)
 
             return pixel_df
 
-        def make_normalized_clusters(self, pixel_df,output_name ):
+        def make_normalized_scaler(self, pixel_df,output_name, ahn_scaler = "./scalers/ahn3.save" ):
 
 
 
@@ -126,13 +135,13 @@ class nso_cluster_break:
             pixel_df['band5'] = band5_scaler.transform(pixel_df['band5'].values.reshape(-1, 1))
 
 
-            ahn4_scaler = "./scalers/ahn4.save"
-            if exists(ahn4_scaler):
+            
+            if exists(ahn_scaler):
                  
-                    band6_scaler= joblib.load(ahn4_scaler) 
+                    band6_scaler= joblib.load(ahn_scaler) 
             else:
                     band6_scaler = MinMaxScaler().fit(pixel_df['band6'].values.reshape(-1, 1))               
-                    joblib.dump(band6_scaler,"./scalers/ahn4.save") 
+                    joblib.dump(band6_scaler,ahn_scaler) 
 
             pixel_df['band6'] = band6_scaler.transform(pixel_df['band6'].values.reshape(-1, 1))
 
@@ -141,7 +150,7 @@ class nso_cluster_break:
 
         def retrieve_stepped_cluster_centers(self,output_name = ""):
 
-            
+                #TODO: Fix making a cluster center.
                 #pixel_df['band1'] =MinMaxScaler().fit_transform(pixel_df['band1'].values.reshape(-1, 1) )
                 #pixel_df['band2'] =MinMaxScaler().fit_transform(pixel_df['band2'].values.reshape(-1, 1) )
                

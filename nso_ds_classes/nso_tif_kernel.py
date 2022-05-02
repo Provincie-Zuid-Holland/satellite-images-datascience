@@ -196,7 +196,7 @@ class nso_tif_kernel_generator:
 
  
 
-    def predict_all_output(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0):
+    def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0):
         """
             Predict all the pixels in the .tif file.
 
@@ -205,20 +205,20 @@ class nso_tif_kernel_generator:
 
         total_height = self.get_height() - self.x_size
 
-        height_steps = round(total_height/steps)
+        height_parts = round(total_height/parts)
         begin_height = self.x_size_begin
-        end_height = self.x_size_begin+height_steps
+        end_height = self.x_size_begin+height_parts
 
         total_height = self.get_height()-self.x_size
         total_width = self.get_width()-self.y_size
 
-        height_steps = total_height/steps
+        height_parts = total_height/parts
 
         dataset = rasterio.open(self.path_to_tif_file)
 
-        for x_step in range(begin_part,steps):
+        for x_step in range(begin_part,parts):
             print("-------")
-            print("Part: "+str(x_step+1)+" of "+str(steps))
+            print("Part: "+str(x_step+1)+" of "+str(parts))
             print(begin_height)
             print(end_height)
             
@@ -261,7 +261,7 @@ class nso_tif_kernel_generator:
             os.remove(local_path_geojson)
 
             begin_height = int(round(end_height+1))
-            end_height = int(round(begin_height+height_steps))
+            end_height = int(round(begin_height+height_parts))
         
             if end_height > self.get_height() - (self.x_size/2):
                 end_height = round(self.get_height() - (self.x_size/2))
@@ -337,7 +337,7 @@ class nso_tif_kernel_generator:
                         return [0,0,0]
         
  
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False, pixel_values = False ):
+    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False, pixel_values = False ):
         """
             Predict all the pixels in the .tif file with a kernel per pixel.
 
@@ -346,25 +346,25 @@ class nso_tif_kernel_generator:
             @param amodel: A prediciton model with has to have a predict function and uses kernels as input.
             @param output_location: Location where to writes the results too.
             @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m.
-            @param steps: break the .tif file in multiple parts, this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory thus we divide a .tif file in multiple parts.
-            @param begin_part: skip certain parts in the steps.
+            @param parts: break the .tif file in multiple parts, this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory thus we divide a .tif file in multiple parts.
+            @param begin_part: skip certain parts in the parts.
             @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
             @param fade: Whether to use fading kernels or not.
             @param normalize: Whether to use normalize all the kernels or not.
         """
         #TODO: Export all variables to other sections.
 
-        # Set some variables for breaking the .tif in different part steps in order to save memory.
+        # Set some variables for breaking the .tif in different part parts in order to save memory.
         total_height = self.get_height() - self.x_size
 
-        height_steps = round(total_height/steps)
+        height_parts = round(total_height/parts)
         begin_height = self.x_size_begin
-        end_height = self.x_size_begin+height_steps
+        end_height = self.x_size_begin+height_parts
 
         total_height = self.get_height()-self.x_size
         total_width = self.get_width()-self.y_size
 
-        height_steps = total_height/steps
+        height_parts = total_height/parts
 
         # Set some variables for multiprocessing.
         self.set_model(amodel)
@@ -380,10 +380,10 @@ class nso_tif_kernel_generator:
         self.pixel_values = pixel_values 
         self.bands = bands
 
-        # Loop through the steps.
-        for x_step in tqdm(range(begin_part,steps)):
+        # Loop through the parts.
+        for x_step in tqdm(range(begin_part,parts)):
             print("-------")
-            print("Part: "+str(x_step+1)+" of "+str(steps))
+            print("Part: "+str(x_step+1)+" of "+str(parts))
             # Calculate the number of permutations for this step.
             permutations = list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)]))
             print("Total permutations this step: "+str(len(permutations)))
@@ -463,7 +463,7 @@ class nso_tif_kernel_generator:
             print(seg_df.columns)
             del seg_df
             begin_height = int(round(end_height+1))
-            end_height = int(round(begin_height+height_steps))
+            end_height = int(round(begin_height+height_parts))
         
             if end_height > self.get_height() - (self.x_size/2):
                 end_height = round(self.get_height() - (self.x_size/2))
@@ -554,7 +554,7 @@ class nso_tif_kernel_generator:
                         print(e)
                         #return [0,0,0]
 
-    def predict_all_output_multiprocessing_keras(self, amodel, output_location, aggregate_output = True, steps = 10, begin_part = 0, keras_break_size = 10000,  multiprocessing = False):
+    def predict_all_output_multiprocessing_keras(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, keras_break_size = 10000,  multiprocessing = False):
         """
             Predict all the pixels in the .tif file with kernels per pixel.
 
@@ -563,21 +563,21 @@ class nso_tif_kernel_generator:
             @param amodel: A prediciton model with has to have a predict function.
             @param output_location: Locatie where to writes the results too.
             @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m
-            @param steps: break the .tif file in multiple steps this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory.
-            @param begin_part: skip certain parts in the steps
+            @param parts: break the .tif file in multiple parts this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory.
+            @param begin_part: skip certain parts in the parts
         """
         
-        # Set some variables for breaking the .tif in different part steps in order to save memory.
+        # Set some variables for breaking the .tif in different part parts in order to save memory.
         total_height = self.get_height() - self.x_size
 
-        height_steps = round(total_height/steps)
+        height_parts = round(total_height/parts)
         begin_height = self.x_size_begin
-        end_height = self.x_size_begin+height_steps
+        end_height = self.x_size_begin+height_parts
 
         total_height = self.get_height()-self.x_size
         total_width = self.get_width()-self.y_size
 
-        height_steps = total_height/steps
+        height_parts = total_height/parts
 
         # Set some variables for multiprocessing.
         self.set_model(amodel)
@@ -589,10 +589,10 @@ class nso_tif_kernel_generator:
 
         self.keras_break_size = keras_break_size 
         
-        # Loop through the steps.
-        for x_step in tqdm(range(begin_part,steps)):
+        # Loop through the parts.
+        for x_step in tqdm(range(begin_part,parts)):
             print("-------")
-            print("Part: "+str(x_step+1)+" of "+str(steps))
+            print("Part: "+str(x_step+1)+" of "+str(parts))
             # Calculate the number of permutations for this step.
             permutations = list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)]))
 
@@ -714,7 +714,7 @@ class nso_tif_kernel_generator:
                     print(seg_df.columns)
                     del seg_df
                     begin_height = int(round(end_height+1))
-                    end_height = int(round(begin_height+height_steps))
+                    end_height = int(round(begin_height+height_parts))
                 
                     if end_height > self.get_height() - (self.x_size/2):
                         end_height = round(self.get_height() - (self.x_size/2))

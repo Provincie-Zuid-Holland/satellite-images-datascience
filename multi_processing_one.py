@@ -24,4 +24,4 @@ if __name__ == '__main__':
     
 
         
-    tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model, out_path , steps = 3)
+    tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model, out_path , parts = 3)

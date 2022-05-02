@@ -22,4 +22,4 @@ if __name__ == '__main__':
     model = load_model('C:/repos/satellite-images-nso-datascience/grayscale_model.h5')   
 
     oktay_model = nso_ds_models.oktay_model(tif_kernel_generator,model)
-    tif_kernel_generator.predict_all_output_multiprocessing_keras(oktay_model, out_path , steps = 40, keras_break_size = 1000)
+    tif_kernel_generator.predict_all_output_multiprocessing_keras(oktay_model, out_path , parts = 40, keras_break_size = 1000)
