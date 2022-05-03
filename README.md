@@ -10,7 +10,7 @@ The following figure represents the input we have for a model:
 ![Alt text](basic_model_input.png?raw=true "Title")
 
 
-This inout data is generated in .tif files which is done in the other satellite images nso github repo [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso/)
+This input data is generated in .tif files which is done in the other satellite images nso github repo [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso/)
 
 # (Image Processing) Kernels.
 
