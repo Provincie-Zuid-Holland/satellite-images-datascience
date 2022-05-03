@@ -51,6 +51,10 @@ class nso_cluster_break:
                             print(e)
 
         def make_clusters_centers(self, a_output_name):
+            """
+                
+            
+            """
 
             annotations_stats = pd.read_csv("./annotations/median_stats_annotations.csv")
             annotations_stats = annotations_stats[["MEDIAN_band1_normalized","MEDIAN_band2_normalized","MEDIAN_band3_normalized","MEDIAN_band4_normalized","MEDIAN_height_normalized","MEDIAN_ndvi_normalized", "Label"]]
@@ -71,15 +75,15 @@ class nso_cluster_break:
 
 
 
-        def make_scaler_stepped_pixel_df(self,parts=10, begin_part=0, multiprocessing = False, output_name = ""):
+        def make_scaler_parts_pixel_df(self,parts=1, specific_part=0, multiprocessing = False, output_name = ""):
             """
             
             This function makes a scaler on bands in a .tif file, which can be based on parts of a .tif file instead of the whole file.
-
+            Breaking the .tif file in multiple parts is sometimes used to because the regular file can be too large.
 
             @param parts: The number of parts of which to divide a .tif file into.
-            
-            
+            @param specific_part: The specific part to make the scaler on.
+            @param multiprocessing: multiprocessing wether to use
             """
 
             total_height = self.kernel_generator.get_height() - self.kernel_generator.x_size
@@ -95,7 +99,7 @@ class nso_cluster_break:
 
             clusters_centers = []
             # Loop through the parts.
-            for x_step in tqdm.tqdm(range(begin_part,parts)):
+            for x_step in tqdm.tqdm(range(specific_part,specific_part+1)):
                 print("-------")
                 print("Part: "+str(x_step+1)+" of "+str(parts))
                 # Calculate the number of permutations for this step.
@@ -106,7 +110,7 @@ class nso_cluster_break:
                 print("Retrieving kernels:")
                 if multiprocessing == True:
                     p = Pool()
-                    pixel_df = p.map(self.get_pixel_multiprocessing ,permutations)
+                    pixel_df = p.map(self.get_pixel_multiprocessing,permutations)
                     p.terminate()
                 else:
                     pixel_df = [ self.get_pixel_multiprocessing(permutation) for permutation in permutations]
@@ -116,34 +120,37 @@ class nso_cluster_break:
                 
                 pixel_df= [elem for elem in pixel_df if elem is not None]
 
-                pixel_df = pd.DataFrame(pixel_df, columns= ["band1","band2","band3","band4","band5","band6"])
+                                
+                pixel_df = pd.DataFrame(pixel_df, columns= [ "band"+str(band) for band in range(1,len(pixel_df)+1)])
                 pixel_df = self.make_normalized_scaler(pixel_df, output_name)
 
             return pixel_df
 
         def make_normalized_scaler(self, pixel_df,output_name, ahn_scaler = "./scalers/ahn3.save" ):
+            """
+            Make scalers based on each bands which will be stored in a .save file.
 
+            @param pixel_df: A pandas dataframe with pixels from a .tif file.
+            @param output_name: The file name of the save files for each band scaler.
+            @oaram ahn_scaler: ahn scaler is used differently so it has to use a different scaler.
+            @return pixel_df: a pandas dataframe based on scaled rgb file.
+            """
 
+            for band in pixel_df.columns[0:len(pixel_df)-2]:
 
-            band3_scaler = MinMaxScaler().fit(pixel_df['band3'].values.reshape(-1, 1))
-            joblib.dump(band3_scaler,"./scalers/"+output_name+"_band3.save") 
-            pixel_df['band3'] = band3_scaler.transform(pixel_df['band3'].values.reshape(-1, 1))
+                band3_scaler = MinMaxScaler().fit(pixel_df[band].values.reshape(-1, 1))
+                joblib.dump(band3_scaler,"./scalers/"+output_name+"_"+str(band)+".save") 
+                pixel_df[band] = band3_scaler.transform(pixel_df[band].values.reshape(-1, 1))
             
-
-            band5_scaler = MinMaxScaler().fit(pixel_df['band5'].values.reshape(-1, 1))
-            joblib.dump(band5_scaler, "./scalers/"+output_name+"_band5.save") 
-            pixel_df['band5'] = band5_scaler.transform(pixel_df['band5'].values.reshape(-1, 1))
-
-
             
             if exists(ahn_scaler):
                  
                     band6_scaler= joblib.load(ahn_scaler) 
             else:
-                    band6_scaler = MinMaxScaler().fit(pixel_df['band6'].values.reshape(-1, 1))               
+                    band6_scaler = MinMaxScaler().fit(pixel_df['band'+str(len(pixel_df))].values.reshape(-1, 1))               
                     joblib.dump(band6_scaler,ahn_scaler) 
 
-            pixel_df['band6'] = band6_scaler.transform(pixel_df['band6'].values.reshape(-1, 1))
+            pixel_df['band'+str(len(pixel_df))] = band6_scaler.transform(pixel_df['band'+str(len(pixel_df))].values.reshape(-1, 1))
 
             return pixel_df
 
