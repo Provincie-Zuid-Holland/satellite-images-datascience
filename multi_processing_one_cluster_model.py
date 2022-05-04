@@ -2,7 +2,7 @@ import nso_ds_classes.nso_tif_kernel as nso_tif_kernel
 import nso_ds_classes.nso_ds_models as nso_ds_models
 import glob
 from nso_ds_classes.nso_ds_models import cluster_annotations_stats_model 
-from nso_ds_classes.nso_ds_cluster import normalize_scaler_class_BNDVIH 
+from nso_ds_classes.nso_ds_normalize_scaler import normalize_scaler_class_BNDVIH 
 import nso_ds_classes.nso_ds_cluster as nso_ds_cluster 
 from os.path import exists
 
@@ -22,8 +22,7 @@ if __name__ == '__main__':
         tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
         cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
 
-       
-        
+               
         # Make clusters if a cluster file does not yet exist
         if exists(cluster_centers_file) is False:
             a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
@@ -32,12 +31,7 @@ if __name__ == '__main__':
             a_nso_cluster_break.make_clusters_centers(cluster_centers_file)
         else:
             print("Previous cluster centers found")
-        
-       
-        
-        
-        
-        
+            
         a_cluster_annotations_stats_model = cluster_annotations_stats_model(cluster_centers_file)
 
         # This model needs scalers in order to be useful.

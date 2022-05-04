@@ -272,8 +272,12 @@ class deep_learning_model:
 
 
 
-class cluster_annotations_stats_model():
+class cluster_scaler_BNDVIH_model():
+    """ 
+        This model predicts using cluster centers and scalers.
 
+        The cluster centers and the scalers should already be premade before the prediction can happens.
+    """
     def __init__(self, cluster_centers_file_name = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"):
 
         # TODO: Read a parametered file.
@@ -282,11 +286,6 @@ class cluster_annotations_stats_model():
         self.labels = pd.read_csv(cluster_centers_file_name)
         
 
-    #  Slow way of predicting might be faster withou
-    #def predict(self, pixel_value):
-    #    return self.cluster_centers['labels'][self.cluster_centers[["band1","band2","band3","band4","band5","band6"]].apply(lambda x:euclidean_distance_kernels(pixel_value,x.values),axis=1).idxmin()]
-
-
     def predict(self,kernel):
         """
         Predict the class of a kernel based on annotations.
@@ -294,11 +293,18 @@ class cluster_annotations_stats_model():
         @param kernel: A kernel to be predicted.
         @return: class in int type of the class.
         """
-        
+        # Use only blue , ndvi and height bands.
+        kernel = [kernel[2],kernel[4], kernel[5]]
         return np.argmin([euclidean_distance_kernels(x,kernel) for x in self.cluster_centers ])
 
     def get_class_label(self,index):
+        """
+        Converts a class integer into a string class value.
 
+        @parm index: the class integer 
+        @return string value for the class.
+
+        """
         return self.labels[self.labels.index == int(index)]['label'].values[0]
 
 

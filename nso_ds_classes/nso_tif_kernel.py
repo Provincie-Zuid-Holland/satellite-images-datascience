@@ -295,21 +295,9 @@ class nso_tif_kernel_generator:
             @return row and column and the predicted label in numbers.
          """
          try:
-                        # Fetches the real coordinates for the row and column needed for writing to a geoformat.
-                        #actual_cor = self.get_x_cor_y_cor(x,y)  
-                        # TODO: Maybe select bands in get_kernel_for_x_y
+               
                         kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1]) if self.pixel_values == False else self.get_pixel_value(input_x_y[0],input_x_y[1])
-                        
-                        # TODO: Fix the extra checking.
-                        #try:
-                        #    kernel = np.array([ kernel[x-1] for x in self.bands])
-                        #except Exception as e:
-                        #    print(e)
-                        #    print("No bands selected")
-                        #kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel
-                        #kernel = self.fadify_kernel(kernel) if self.fade == True else kernel        
-                        
-                        
+                                             
                         return  kernel
 
          except ValueError as e:                  
@@ -321,12 +309,20 @@ class nso_tif_kernel_generator:
                         return [0,0,0]
 
     def func_multi_processing_predict(self, input_x_y):
+        """
+        
+        This function is used to predict input with a multiprocessing function.
+        The model needs to heve a predict function in order to work.
 
+        @param input_x_y: The input row for which to do predictions on.
+        @return the prediction for the input values.
+        
+        """
         try:
 
             # TODO: Make the bands selected able
-            label = self.model.predict([input_x_y[2],input_x_y[4], input_x_y[5]])
-            return [input_x_y[6][0], input_x_y[6][1], label]
+            label = self.model.predict([input_x_y])
+            return [input_x_y[len(input_x_y)-1][0], input_x_y[len(input_x_y)-1][1], label]
 
         except ValueError as e:                  
                         if str(e) != "Center pixel is empty":                          
@@ -350,7 +346,7 @@ class nso_tif_kernel_generator:
             @param begin_part: skip certain parts in the parts.
             @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
             @param fade: Whether to use fading kernels or not.
-            @param normalize: Whether to use normalize all the kernels or not.
+            @param normalize: Whether to use normalize all the kernels or not, the input here so be a normalize function.
         """
         #TODO: Export all variables to other sections.
 
@@ -384,21 +380,18 @@ class nso_tif_kernel_generator:
         for x_step in tqdm(range(begin_part,parts)):
             print("-------")
             print("Part: "+str(x_step+1)+" of "+str(parts))
-            # Calculate the number of permutations for this step.
+            # Calculate the number of permutations for this part.
             permutations = list(itertools.product([x for x in range(begin_height, end_height)], [ y for y in range(self.y_size_begin, self.get_width()-self.y_size_end)]))
             print("Total permutations this step: "+str(len(permutations)))
             
             # Init the multiprocessing pool.
-            # TODO: Maybe use swifter for this?
             start = timer() 
             p = Pool()
             seg_df = p.map(self.func_multi_processing_get_kernels,permutations)
             print("Pool kernel fetching finised in: "+str(timer()-start)+" second(s)")
           
-            
-
            
-            seg_df = pd.DataFrame(seg_df, columns= ["band1","band2","band3","band4","band5","band6"])
+            seg_df = pd.DataFrame(seg_df, columns= ["band"+str(band) for band in bands] )
 
             if normalize is not False:
                 print("Normalizing data")
@@ -480,8 +473,6 @@ class nso_tif_kernel_generator:
                             print("Append")
                             all_part = all_part.append(gpd.read_file(file))
                             
-                       
-
         try:
             if str(type(amodel)) != "<class 'nso_ds_classes.nso_ds_models.deep_learning_model'>" or str(type(amodel)) == "<class 'nso_ds_classes.nso_ds_models.waterleiding_ahn_ndvi_model'>":
                 all_part['label'] = all_part.apply(lambda x: amodel.get_class_label(x['label']), axis=1)

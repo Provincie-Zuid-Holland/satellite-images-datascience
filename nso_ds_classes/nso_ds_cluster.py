@@ -13,21 +13,7 @@ import joblib
 from os.path import exists
 
 
-class normalize_scaler_class_BNDVIH:
-    #TODO: Make a other class for scalers?
-    def __init__(self, scaler_file_band3 = "",scaler_file_band5 = "", scaler_file_band6 = "") :
-        
-        self.scaler_band3 = joblib.load(scaler_file_band3)
-        self.scaler_band5 = joblib.load(scaler_file_band5)
-        self.scaler_band6 = joblib.load(scaler_file_band6)
 
-    def transform(self,pixel_df):
-
-
-        pixel_df['band3'] = self.scaler_band3.transform(pixel_df['band3'].values.reshape(-1,1))
-        pixel_df['band5'] = self.scaler_band5.transform(pixel_df['band5'].values.reshape(-1, 1))
-        pixel_df['band6'] = self.scaler_band6.transform(pixel_df['band6'].values.reshape(-1, 1))
-        return pixel_df
 
 
 class nso_cluster_break:
