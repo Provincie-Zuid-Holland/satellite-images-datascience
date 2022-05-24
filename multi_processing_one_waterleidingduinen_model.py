@@ -24,4 +24,4 @@ if __name__ == '__main__':
     
 
         
-    tif_kernel_generator.predict_all_output_multiprocessing(watlerleiding_duinen_ahn_ndvi_model, out_path , parts = 3)
+    tif_kernel_generator.predict_all_output(watlerleiding_duinen_ahn_ndvi_model, out_path , parts = 3)

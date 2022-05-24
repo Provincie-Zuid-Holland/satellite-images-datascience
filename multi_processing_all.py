@@ -27,4 +27,4 @@ if __name__ == '__main__':
 
         watlerleiding_duinen_ahn_ndvi_model = nso_ds_models.waterleiding_ahn_ndvi_model(tif_kernel_generator, annotations_np_array = "./median_annotation_rgbi_ndvi_rgbi.npy", fade=False)
         
-        tif_kernel_generator.predict_all_output_multiprocessing(watlerleiding_duinen_ahn_ndvi_model,"E:/output/Coepelduynen_segmentations/"+file.split("/")[-1].replace(".tif",".shp"), parts = 3, fade = False)
+        tif_kernel_generator.predict_all_output(watlerleiding_duinen_ahn_ndvi_model,"E:/output/Coepelduynen_segmentations/"+file.split("/")[-1].replace(".tif",".shp"), parts = 3, fade = False)

@@ -52,7 +52,7 @@ euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_gen
 euclidean_distance_model.set_ec_distance_custom_annotations(path_to_tif_file.split("/")[-1], fade=True)
 
 # Predict all the pixels in a .tif file with a particular model and stores the dissolved results in the out_path file.     
-tif_kernel_generator.predict_all_output_multiprocessing(euclidean_distance_model, out_path , parts = 3, fade=True)
+tif_kernel_generator.predict_all_output(euclidean_distance_model, out_path , parts = 3, fade=True)
 ```
 
 
@@ -131,7 +131,7 @@ Which is used in the following way:
     model.train_model_on_sat_anno(path_to_tif_file.split("/")[-1])
 
     # Use the model to predict all the pixels in a .tif in a multiprocessing way.    
-    tif_kernel_generator.predict_all_output_multiprocessing(model, out_path , parts = 3)
+    tif_kernel_generator.predict_all_output(model, out_path , parts = 3)
 
 ```
 

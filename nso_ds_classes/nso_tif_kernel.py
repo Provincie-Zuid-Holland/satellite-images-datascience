@@ -196,94 +196,6 @@ class nso_tif_kernel_generator:
 
  
 
-    def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0):
-        """
-            Predict all the pixels in the .tif file.
-
-            @param amodel: A prediciton model.
-        """
-
-        total_height = self.get_height() - self.x_size
-
-        height_parts = round(total_height/parts)
-        begin_height = self.x_size_begin
-        end_height = self.x_size_begin+height_parts
-
-        total_height = self.get_height()-self.x_size
-        total_width = self.get_width()-self.y_size
-
-        height_parts = total_height/parts
-
-        dataset = rasterio.open(self.path_to_tif_file)
-
-        for x_step in range(begin_part,parts):
-            print("-------")
-            print("Part: "+str(x_step+1)+" of "+str(parts))
-            print(begin_height)
-            print(end_height)
-            
-            seg_df = np.zeros((((end_height-begin_height)*(self.get_width()-self.y_size)),3))
-            seg_df_idx = 0
-            for x in tqdm(range(begin_height, end_height)):
-                for y in range(self.y_size_begin, self.get_width()-self.y_size_end):
-                    
-                    try:
-                        # Fetches the real coordinates for the row and column needed for writing to a geoformat.
-                        actual_cor = self.get_x_cor_y_cor(x,y,dataset)  
-                        kernel = self.get_kernel_for_x_y(x,y)
-                        seg_df[seg_df_idx] = [actual_cor[0], actual_cor[1], amodel.predict(kernel)]
-                        seg_df_idx = seg_df_idx+1
-
-                    except ValueError as e:
-                        xio = 0
-                    except Exception as e:
-                        print(e)
-
-                    
-            seg_df = pd.DataFrame(seg_df, columns = ['rd_x','rd_y','class'] )
-            seg_df = seg_df[(seg_df['rd_x'] != 0) & (seg_df['rd_y'] != 0)]
-            seg_df['class'] = seg_df.apply(lambda x: amodel.get_class_label(x['class']), axis=1)
-
-            if aggregate_output == True:
-                seg_df["x_group"] = np.round(seg_df["rd_x"]/2)*2
-                seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
-                seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('class', \
-                                                        lambda x: x.value_counts().index[0])
-                                                    )
-            seg_df["x"] = list(map(lambda x: x[0], seg_df.index))
-            seg_df["y"] = list(map(lambda x: x[1], seg_df.index))
-            seg_df= seg_df[["x","y","label"]].values
-            
-            local_path_geojson = "./current.geojson"
-            nso_ds_output.produce_geojson(seg_df,local_path_geojson)
-            nso_ds_output.dissolve_label_geojson(local_path_geojson, output_location.replace(".","_part_"+str(x_step)+"."))
-            print(output_location.replace(".","_part_"+str(x_step)+"."))
-            os.remove(local_path_geojson)
-
-            begin_height = int(round(end_height+1))
-            end_height = int(round(begin_height+height_parts))
-        
-            if end_height > self.get_height() - (self.x_size/2):
-                end_height = round(self.get_height() - (self.x_size/2))
-        
-        all_part = 0
-        first_check = 0
-
-        for file in glob.glob(output_location.replace(".","_part_*.")):
-                        print(file)
-                        if first_check == 0:
-                            all_part = gpd.read_file(file)
-                            first_check = 1
-                        else:
-                            print("Append")
-                            all_part = all_part.append(gpd.read_file(file))
-                        os.remove(file)
-
-        all_part.dissolve(by='label').to_file(output_location)
-
-        for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
-            os.remove(file)
-
 
     def func_multi_processing_get_kernels(self, input_x_y):
          """
@@ -296,8 +208,7 @@ class nso_tif_kernel_generator:
          """
          try:
                
-                        kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1]) if self.pixel_values == False else self.get_pixel_value(input_x_y[0],input_x_y[1])
-                                             
+                        kernel = self.get_kernel_for_x_y(input_x_y[0],input_x_y[1]) if self.pixel_values == False else self.get_pixel_value(input_x_y[0],input_x_y[1])                                         
                         return  kernel
 
          except ValueError as e:                  
@@ -333,22 +244,22 @@ class nso_tif_kernel_generator:
                         return [0,0,0]
         
  
-    def predict_all_output_multiprocessing(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize = False, pixel_values = False ):
+    def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize_scaler = False, pixel_values = False, multiprocessing = True ):
         """
-            Predict all the pixels in the .tif file with a kernel per pixel.
+            Predict all the pixels in the .tif file either with a kernel per pixel or not.
 
-            Uses multiprocessing to speed up the results.
+            Uses multiprocessing to speed up the results, which can be optional.
 
             @param amodel: A prediciton model with has to have a predict function and uses kernels as input.
-            @param output_location: Location where to writes the results too.
+            @param output_location: Location where to writes the results to in .shp file.
             @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m.
             @param parts: break the .tif file in multiple parts, this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory thus we divide a .tif file in multiple parts.
-            @param begin_part: skip certain parts in the parts.
+            @param begin_part: The part to begin with in order to skip certain parts.
             @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
             @param fade: Whether to use fading kernels or not.
-            @param normalize: Whether to use normalize all the kernels or not, the input here so be a normalize function.
+            @param normalize_scaler: Whether to use normalize/scaler all the kernels or not, the input here so be a normalize/scaler function.
         """
-        #TODO: Export all variables to other sections.
+       
 
         # Set some variables for breaking the .tif in different part parts in order to save memory.
         total_height = self.get_height() - self.x_size
@@ -371,7 +282,7 @@ class nso_tif_kernel_generator:
             self.normalize = amodel.get_normalize()
         except:
             self.fade = fade
-            self.normalize = normalize
+            self.normalize = normalize_scaler
         
         self.pixel_values = pixel_values 
         self.bands = bands
@@ -386,16 +297,20 @@ class nso_tif_kernel_generator:
             
             # Init the multiprocessing pool.
             start = timer() 
-            p = Pool()
-            seg_df = p.map(self.func_multi_processing_get_kernels,permutations)
-            print("Pool kernel fetching finised in: "+str(timer()-start)+" second(s)")
-          
+            
+            if multiprocessing is True:
+                p = Pool()
+                seg_df = p.map(self.func_multi_processing_get_kernels,permutations)
+                print("Pool kernel fetching finised in: "+str(timer()-start)+" second(s)")
+            else:
+                seg_df = [self.func_multi_processing_get_kernels(permutation) for permutation in permutations ]
+
            
             seg_df = pd.DataFrame(seg_df, columns= ["band"+str(band) for band in bands] )
 
-            if normalize is not False:
+            if normalize_scaler is not False:
                 print("Normalizing data")
-                seg_df = normalize.transform(seg_df)
+                seg_df = normalize_scaler.transform(seg_df)
             
 
             seg_df["permutation"] = permutations
@@ -406,7 +321,10 @@ class nso_tif_kernel_generator:
          
             start = timer() 
 
-            seg_df = p.map(self.func_multi_processing_predict,seg_df)
+            if multiprocessing is True:
+                seg_df = p.map(self.func_multi_processing_predict,seg_df)
+            else:
+                seg_df = [self.func_multi_processing_predict(permutation) for permutation in seg_df ]    
 
             print("Predicting finised in: "+str(timer()-start)+" second(s)")
 
@@ -440,9 +358,12 @@ class nso_tif_kernel_generator:
             start = timer()  
             
             # Make squares from the the pixels in order to make contected polygons from them.
-            seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
+            if multiprocessing is True:
+                seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
+                p.terminate()
+            else:
+                seg_df['geometry'] = [func_cor_square(permutation) for permutation in seg_df[["rd_x","rd_y"] ].to_numpy().tolist() ]  
             
-            p.terminate()
             seg_df= seg_df[["geometry","label"]]
 
             # Store the results in a geopandas dataframe.
@@ -484,6 +405,9 @@ class nso_tif_kernel_generator:
         for file in glob.glob(output_location.replace(".","_part_*.").split(".")[0]):
             os.remove(file)
 
+
+
+
     def get_kernel_multi_processing(self, input_x_y):
          """
             This function is used to do multiprocessing predicting.
@@ -513,6 +437,7 @@ class nso_tif_kernel_generator:
 
     def predict_keras_multi_processing(self, input_x_y_kernel):
         """
+            
             This function is used to do multiprocessing predicting.
 
             Prediction function for keras models
@@ -545,8 +470,10 @@ class nso_tif_kernel_generator:
                         print(e)
                         #return [0,0,0]
 
-    def predict_all_output_multiprocessing_keras(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, keras_break_size = 10000,  multiprocessing = False):
+    def predict_all_output_keras(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, keras_break_size = 10000,  multiprocessing = False):
         """
+
+            TODO: This function is outdated and needs to update with predict_all_output
             Predict all the pixels in the .tif file with kernels per pixel.
 
             Uses multiprocessing to speed up the results.
@@ -882,7 +809,12 @@ def plot_kernel(kernel,y=0 ):
             rasterio.plot.show(np.clip(kernel[2::-1],0,2200)/2200)
 
 def func_cor_square(input_x_y):
+        """
+        This function is used to make squares out of pixels for a inter connected output.
 
+        @param input_x_y a pixel input variable to be made into a square.
+        @return the the squared pixel.        
+        """
         rect = [round(input_x_y[0]/2)*2, round(input_x_y[1]/2)*2, 0, 0]
         rect[2], rect[3] = rect[0] + 2, rect[1] + 2
         coords = Polygon([(rect[0], rect[1]), (rect[2], rect[1]), (rect[2], rect[3]), (rect[0], rect[3]), (rect[0], rect[1])])

@@ -293,8 +293,8 @@ class cluster_scaler_BNDVIH_model():
         @param kernel: A kernel to be predicted.
         @return: class in int type of the class.
         """
-        # Use only blue , ndvi and height bands.
-        kernel = [kernel[2],kernel[4], kernel[5]]
+        # Use only blue , ndvi and height bands, note that these are hard coded on the number within the band.
+        kernel = [kernel[0][2],kernel[0][4], kernel[0][5]]
         return np.argmin([euclidean_distance_kernels(x,kernel) for x in self.cluster_centers ])
 
     def get_class_label(self,index):
