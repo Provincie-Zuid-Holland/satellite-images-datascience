@@ -7,6 +7,11 @@ import nso_ds_classes.nso_ds_cluster as nso_ds_cluster
 from os.path import exists
 
 
+""" 
+This is now the default model.
+
+"""
+
 if __name__ == '__main__':
 
     # Set a kernel generator.
@@ -41,7 +46,7 @@ if __name__ == '__main__':
                 a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
                 a_nso_cluster_break.make_scaler_stepped_pixel_df(output_name = path_to_tif_file.split("/")[-1], parts=2, begin_part=1, multiprocessing= True)
 
-        
+        # Initialize a scaler model.
         a_normalize_scaler_class_BNDVIH = scaler_class_BNDVIH( "./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save", \
                                                                             scaler_file_band5 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band5.save", \
                                                                             scaler_file_band6 = "./scalers/ahn4.save")

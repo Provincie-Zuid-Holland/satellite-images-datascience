@@ -257,7 +257,9 @@ class nso_tif_kernel_generator:
             @param begin_part: The part to begin with in order to skip certain parts.
             @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
             @param fade: Whether to use fading kernels or not.
-            @param normalize_scaler: Whether to use normalize/scaler all the kernels or not, the input here so be a normalize/scaler function.
+            @param normalize_scaler: Whether to use normalize/scaler all the kernels or not, the input here so be a normalize/scaler function. You have to submit the scaler here if you want to use a scaler.
+            @param pixel_values: Whether or not to ignore the kernels and use pixel values instead.
+            @param multiprocessing: Whether or not to use multiprocessing for loop for iterating across all the pixels.
         """
        
 
@@ -287,7 +289,7 @@ class nso_tif_kernel_generator:
         self.pixel_values = pixel_values 
         self.bands = bands
 
-        # Loop through the parts.
+        # Divide the satellite images into multiple parts and loop through the parts, using parts reduces the amount of RAM required to run this process.
         for x_step in tqdm(range(begin_part,parts)):
             print("-------")
             print("Part: "+str(x_step+1)+" of "+str(parts))
@@ -307,9 +309,10 @@ class nso_tif_kernel_generator:
 
            
             seg_df = pd.DataFrame(seg_df, columns= ["band"+str(band) for band in bands] )
-
+            
+            # Check if a normalizer or a  scaler has to be used.
             if normalize_scaler is not False:
-                print("Normalizing data")
+                print("Normalizing/Scaling data")
                 seg_df = normalize_scaler.transform(seg_df)
             
 
@@ -329,6 +332,8 @@ class nso_tif_kernel_generator:
             print("Predicting finised in: "+str(timer()-start)+" second(s)")
 
             seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','label'])
+
+            # Filter empty pixels.
             seg_df = seg_df[(seg_df['x_cor'] != 0) & (seg_df['y_cor'] != 0)]
             print("Number of used pixels for this step: "+str(len(seg_df)))
 
@@ -359,10 +364,10 @@ class nso_tif_kernel_generator:
             
             # Make squares from the the pixels in order to make contected polygons from them.
             if multiprocessing is True:
-                seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"] ].to_numpy().tolist())
+                seg_df['geometry'] = p.map(func_cor_square, seg_df[["rd_x","rd_y"]].to_numpy().tolist())
                 p.terminate()
             else:
-                seg_df['geometry'] = [func_cor_square(permutation) for permutation in seg_df[["rd_x","rd_y"] ].to_numpy().tolist() ]  
+                seg_df['geometry'] = [func_cor_square(permutation) for permutation in seg_df[["rd_x","rd_y"] ].to_numpy().tolist()]  
             
             seg_df= seg_df[["geometry","label"]]
 
@@ -438,7 +443,7 @@ class nso_tif_kernel_generator:
     def predict_keras_multi_processing(self, input_x_y_kernel):
         """
             
-            This function is used to do multiprocessing predicting.
+            This function is used to do multiprocessing predicting
 
             Prediction function for keras models
 
@@ -474,7 +479,7 @@ class nso_tif_kernel_generator:
         """
 
             TODO: This function is outdated and needs to update with predict_all_output
-            Predict all the pixels in the .tif file with kernels per pixel.
+            Predict all the pixels in the .tif file with kernels per pixel. mostly the same as predict_all_output only intended for keras models.
 
             Uses multiprocessing to speed up the results.
 

@@ -1,7 +1,14 @@
 # Introduction 
 
-This repository contains all the models used in image object detection and image segmentation of the satellites images of the NSO used by the Province of South Holland.
+This repository contains all the models and satellite raster .tif file iterator used in image object detection and image segmentation of the satellites images of the NSO used by the Province of South Holland.
 Through out this document I will be referring to image object detection and image segmentation as segmentation.
+
+The satellite raster .tif file iterater provides a easy interface to iterate a model for all the pixels.
+It provides a multi processing for loop in order to speed up this process because some satellite images can contain millions of pixels.
+
+# Dependencies.
+
+
 
 # Model input.
  
@@ -51,7 +58,7 @@ euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_gen
 # Set annotations for the model to predict on.
 euclidean_distance_model.set_ec_distance_custom_annotations(path_to_tif_file.split("/")[-1], fade=True)
 
-# Predict all the pixels in a .tif file with a particular model and stores the dissolved results in the out_path file.     
+# Iterates and predicts all the pixels in a .tif file with a particular model and stores the dissolved results in the out_path file.     
 tif_kernel_generator.predict_all_output(euclidean_distance_model, out_path , parts = 3, fade=True)
 ```
 
