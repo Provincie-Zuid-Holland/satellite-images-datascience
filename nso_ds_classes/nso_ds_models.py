@@ -6,7 +6,15 @@ import os
 from sklearn.preprocessing import LabelEncoder
 from sqlalchemy import false
 import joblib
+"""
 
+This file contains all the models which we have used in the remote sensing project for vegetation detection in the natura2000 area's.
+
+The different models are stored in classes and as such can be individually imported.
+
+
+Author: Michael de Winter, Jeroen Esseveld.
+"""
 
 
 class euclidean_distance_model:
@@ -15,7 +23,6 @@ class euclidean_distance_model:
     A model that simply predicts a pixel kernel based on the euclidean distance between pre annotated kernels.
     
     """
-
 
     def __init__(self, a_kernel_generator,fade = False, normalize = False):
         """

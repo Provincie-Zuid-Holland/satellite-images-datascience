@@ -1,4 +1,4 @@
-import nso_ds_classes.nso_tif_kernel as nso_tif_kernel
+import nso_ds_classes.nso_tif_kernel_iterator as nso_tif_kernel_iterator
 import nso_ds_classes.nso_ds_models as nso_ds_models
 import glob
 from nso_ds_classes.nso_ds_models import cluster_scaler_BNDVIH_model
@@ -15,8 +15,8 @@ This is now the default model.
 if __name__ == '__main__':
 
     # Set a kernel generator.
-    x_kernel_width = 32
-    y_kernel_height = 32
+    x_kernel_width = 1
+    y_kernel_height = 1
 
 
     for file in glob.glob("E:/data/coepelduynen/2022*ndvi_height.tif"):
@@ -24,7 +24,7 @@ if __name__ == '__main__':
         path_to_tif_file = file.replace("\\","/")
         print(path_to_tif_file)
         out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
-        tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
+        tif_kernel_generator = nso_tif_kernel_iterator.nso_tif_kernel_iterator_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
         cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
 
                
@@ -54,4 +54,4 @@ if __name__ == '__main__':
 
 
             
-        tif_kernel_generator.predict_all_output(a_cluster_annotations_stats_model, out_path , parts = 3, pixel_values=True, normalize_scaler= a_normalize_scaler_class_BNDVIH )
+        tif_kernel_generator.predict_all_output(a_cluster_annotations_stats_model, out_path , parts = 3,  normalize_scaler= a_normalize_scaler_class_BNDVIH )

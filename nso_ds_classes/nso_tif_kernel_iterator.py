@@ -20,19 +20,21 @@ import random
 
 
 """
-    This code is used to extract image processing kernels from nso satellite images .tif images
+    This code is used to extract image processing kernels from nso satellite images .tif images and execute a model on each of those kernels with multi processing for loop.
 
     For more information what kernels are: https://en.wikipedia.org/wiki/Kernel_(image_processing)
 
     Author: Michael de Winter, Jeroen Esseveld
 """
-class nso_tif_kernel_generator:
+class nso_tif_kernel_iterator_generator:
 
     """
         This class set up a .tif image in order to easily extracts kernel from it.
         With various parameters to control the size of the kernel.
 
         Fading, which means giving less weight to pixels other than the centre kernel, is also implemented here. 
+
+        Plus a multiprocessing for loop which iterates of each of these kernels extracted from the .tif file.
 
     """
 
@@ -57,7 +59,7 @@ class nso_tif_kernel_generator:
         
         self.path_to_tif_file = path_to_tif_file
 
-        # TODO: Because of multiprocessing we can't stored rasterio datasets.
+        # TODO: Because of multiprocessing we can't stored rasterio datasets, multi processing does not support this.
         #self.dataset = dataset
         self.width = width
         self.height = height
@@ -69,6 +71,10 @@ class nso_tif_kernel_generator:
         self.y_size = y_size
         self.y_size_begin = round(y_size/2)
         self.y_size_end = round(y_size/2)
+
+        # Skipping using a kernel if the kernel size is 1 for beter performance.
+        self.pixel_values = True if x_size == 1 and y_size ==1 else  False
+
 
         self.sat_name = path_to_tif_file.split("/")[-1]
 
@@ -101,7 +107,6 @@ class nso_tif_kernel_generator:
         return kernel*self.fade_kernel
 
 
-
     def normalize_tile_kernel(self, kernel):
         """
             Normalize image kernels with sklearn's normalize.
@@ -128,8 +133,15 @@ class nso_tif_kernel_generator:
         return kernel/self.fade_kernel
 
     def get_pixel_value(self,index_x,index_y):
+        """
+        
+        Extra method which for extracting only one pixel value in a kernel, should have a faster performance than get_kernel_for_x_y for a kernel size of 1.
 
 
+        @param index_x: the x coordinate.
+        @param index_y: the y coordinate.
+        
+        """
         if sum([band[index_x][index_y] for band in self.data]) == 0:
             raise ValueError("Center pixel is empty")
         else:
@@ -194,8 +206,6 @@ class nso_tif_kernel_generator:
         return pd.Series({'rd_x':int(index_x), 'rd_y':int(index_y)}) 
 
 
- 
-
 
     def func_multi_processing_get_kernels(self, input_x_y):
          """
@@ -244,11 +254,13 @@ class nso_tif_kernel_generator:
                         return [0,0,0]
         
  
-    def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize_scaler = False, pixel_values = False, multiprocessing = True ):
+    def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize_scaler = False, multiprocessing = True ):
         """
-            Predict all the pixels in the .tif file either with a kernel per pixel or not.
+            A multiprocessing iterator which predicts all pixel in a .tif based on there kernels. optionally to do this the multiprocessing way.
 
-            Uses multiprocessing to speed up the results, which can be optional.
+            For specifically large .tif files, this file has to be divided into multiple parts parameters are here which control that.
+
+            For the other parameters check here below:
 
             @param amodel: A prediciton model with has to have a predict function and uses kernels as input.
             @param output_location: Location where to writes the results to in .shp file.
@@ -258,7 +270,6 @@ class nso_tif_kernel_generator:
             @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
             @param fade: Whether to use fading kernels or not.
             @param normalize_scaler: Whether to use normalize/scaler all the kernels or not, the input here so be a normalize/scaler function. You have to submit the scaler here if you want to use a scaler.
-            @param pixel_values: Whether or not to ignore the kernels and use pixel values instead.
             @param multiprocessing: Whether or not to use multiprocessing for loop for iterating across all the pixels.
         """
        
@@ -286,7 +297,7 @@ class nso_tif_kernel_generator:
             self.fade = fade
             self.normalize = normalize_scaler
         
-        self.pixel_values = pixel_values 
+        
         self.bands = bands
 
         # Divide the satellite images into multiple parts and loop through the parts, using parts reduces the amount of RAM required to run this process.
