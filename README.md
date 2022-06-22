@@ -15,6 +15,22 @@ In addition this repository contains all the models  which we have used for the 
 Through out this document we will be referring to image object detection and image segmentation as segmentation.
 
 # Dependencies.
+If you are a Windows user you have to install the dependencies via wheels. The wheels for the following dependencies should be downloaded from https://www.lfd.uci.edu/~gohlke/pythonlibs/:
+
+- [![GDAL>=3.0.4 ](https://img.shields.io/badge/GDAL-%3E%3D3.0.4-blue)](https://gdal.org/)
+- [![Fiona>=1.8.13 ](https://img.shields.io/badge/Fiona-%3E%3D1.8.13-green)](https://pypi.org/project/Fiona/)
+- [![rasterio>=1.1.3 ](https://img.shields.io/badge/rasterio-%3E%3D1.1.3-blue)](https://rasterio.readthedocs.io/en/latest/)
+- [![Shapely>=1.7.0 ](https://img.shields.io/badge/Shapely-%3E%3D1.7.0-green)](https://shapely.readthedocs.io/en/stable/manual.html)
+- [![geopandas>=0.9.0](https://img.shields.io/badge/geopandas-%3E%3D0.9.0-blue)](https://geopandas.org/en/stable/)
+- [![scikit-learn==1.0.2](https://img.shields.io/badge/scikit--learn-%3D%3D1.0.2-brightgreen)](https://scikit-learn.org/stable/)
+
+These should be installed in de following order: first GDAL, then Fiona and then rasterio. After these you can install the rest.
+
+Download the wheels according to your system settings. For instance, wheel rasterio 1.2.10 cp39 cp39 win_amd64.whl is used with the 64-bit version of Windows and a 3.9 version of python. Install the wheel with pip install XXX.XX.XX.whl.
+
+Or else check out this stack overflow post:
+https://gis.stackexchange.com/questions/2276/installing-gdal-with-python-on-windows 
+
 
 # Model input.
  
@@ -27,11 +43,13 @@ This input data is generated in .tif files which is done in the other satellite 
 And for the height data here: [Here]( https://github.com/Provincie-Zuid-Holland/vdwh_ahn_processing )
 
 # (Image Processing) Kernels.
-This will be a code example of how to extract image kernels and the multiprocessing for loop for looping over all the pixels and/or image kernels in a given satellite .tif file to make predictions on them.
+The main functionality of this repository is to extract image kernels and the multiprocessing for loop for looping over all the pixels and/or image kernels in a given satellite .tif file to make predictions on them.
 
-In this example we will use a Euclidean distance model to segment all the pixels in a .tif file into segments that are specified in a annotations file.
+The following picture gives a illustration about how this extracting  of kernels is done:
+![Alt text](kernel_extract.png?raw=true "Title")
 
-See this code example:
+
+Here below we will have a code example about how this work. In this example we will use a Euclidean distance model to segment all the pixels in a .tif file into segments that are specified in a annotations file.
 
 ```python
 
@@ -40,6 +58,7 @@ import nso_ds_classes.nso_ds_models as nso_ds_models
 path_to_tif_file = "<PATH_TO_NSO_SAT_IMG.TIF>"
 out_path = "<PATH_TO_OUTPUT_FILE.shp"
 
+# The kernel size will be 32 by 32
 x_size_kernel = 32
 y_size_kernel = 32
 
@@ -74,9 +93,9 @@ tif_kernel_generator.predict_all_output(euclidean_distance_model, out_path , par
 
 We have tried different models all of which are still stored in nso_ds_classes /nso_ds_models.py file.
 
-After a certain amount of testing we have decided to the (scaled) contrast model is the final model we will use. This is due to it's capability to adjust for variances in the atmosphere which causes different color interferences in the satellite images. And it’s better computing performance versus conventional best performance models like deep learning models, which was a couple of minutes in contrast to days.
+After a certain amount of testing we have decided that the (scaled) contrast model is the final model we will use. This is due to it's capability to adjust for variances in the atmosphere which causes different color interferences in the satellite images. And it’s better computing performance versus conventional best performance models like deep learning models, which was a couple of minutes in contrast to days.
 
-## (Scaled) Contrast Model
+## (Main) Scaled Contrast Model
 ### Predetermined contrast classes
 First Predetermined classes centers are made which classify classes based on there contrasts. These classes were made with domain expertise. 
 
@@ -97,7 +116,7 @@ For more about how min max scalers, read the sklearn page [Here](https://scikit-
 ### Input filtering
 
 For the input we discovered that the atmosphere had a collinearity effect on the three red, green and blue values. As such we only pick the blue band in order to reduce the relative color weight in the prediction compared to NDVI and height data.
-A other advantage of using the color blue is that it’s the best color to  detect sand with. Which for this case is particular important 
+A other advantage of using the color blue is that it’s the best color to  detect sand with. Detecting sand is particularly interesting for ecologists. 
 
 The following illustration exemplifies the eventual and final input we have for the contrast model:
 
@@ -109,13 +128,13 @@ The following picture gives a easy illustration about how the prediction works:
 
 ![Alt text](Contrast_model_example.png?raw=true "Title")
 
-For a particular pixel or kernel, in which blue, NDVI and height is used and scaled between 0 en 1, Euclidean distance is calculated for blue, NDVI and height to each cluster center.
+For a particular pixel or kernel, in which blue, NDVI and height is used and scaled between 0 en 1, Euclidean distance is calculated for blue, NDVI and height to each cluster center. The shortest Euclidean distance to a class, is then the predicted class.
 
-This be interpreted as for a given certain pixel or kernel example the blue of is between 1 and 0.7 for the input value, for blue this would mean that the pixel/kernel is sand for the input value blue as shown in the figure. 
+This can easily be interpreted as if for a given certain pixel or kernel the scaled blue color is between 1 and 0.7 this would mean that for this certain pixel/kernel sand for the input value blue. The same goes for the other input values NDVI and Height. The combinations of different input values gives the final predicted class.
 
-This is done for each input value and thus is result is a predicted label.
 
 ### Example code
+Below here we will give a code example of how to use this contrast model and added comments.
 
 ```python
 
@@ -134,43 +153,39 @@ This is now the default model.
 
 if __name__ == '__main__':
 
-    # Set a kernel generator.
+    # Set a kernel generator, in this case we will only use a kernel size of 1.
     x_kernel_width = 1
     y_kernel_height = 1
 
-    for file in glob.glob("E:/data/coepelduynen/2022*ndvi_height.tif"):
+    # Loop through a directory which contains .tif files to be predicted.
+    for file in glob.glob("<PATH>/<TO>/<TIF_DIRECTORY>/*blue_ndvi_height.tif"):
 
+        # Setup a tif kernel iterator.
         path_to_tif_file = file.replace("\\","/")
         print(path_to_tif_file)
-        out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
+        out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")      
         tif_kernel_generator = nso_tif_kernel_iterator.nso_tif_kernel_iterator_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
+
+        
+        # Path to the predetermined classes.
         cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
 
                
-        # Make clusters if a cluster file does not yet exist
-        if exists(cluster_centers_file) is False:
-            a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
-            a_nso_cluster_break.get_stepped_pixel_df(output_name = path_to_tif_file.split("/")[-1], parts=2, begin_part=1, multiprocessing= True)
-            
-            a_nso_cluster_break.make_clusters_centers(cluster_centers_file)
-        else:
-            print("Previous cluster centers found")
-
-        # Init the model to make prediction with.    
+        # Load the class cluster centers into a euclidean distance model.   
         a_cluster_annotations_stats_model = cluster_scaler_BNDVIH_model(cluster_centers_file)
 
-        # This model needs scalers in order to be useful, check if they already exist.
+        # This model needs scalers in order to be useful for a specific .tif file, check if they already exist. Make them if they don't already exist.
         if exists("./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save") is False:
                 print("No scalers found making scalers")
                 a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
                 a_nso_cluster_break.make_scaler_stepped_pixel_df(output_name = path_to_tif_file.split("/")[-1], parts=2, begin_part=1, multiprocessing= True)
 
-        # Initialize a scaler model.
+        # Initialize a scaler model for the iterater to be used.
         a_normalize_scaler_class_BNDVIH = scaler_class_BNDVIH( "./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save", \
                                                                             scaler_file_band5 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band5.save", \
                                                                             scaler_file_band6 = "./scalers/ahn4.save")
 
-            
+        # The main iterator loop, if no multiprocessing variable is giving, it automatically will do multiprocessing and thus has to be run from a kernel. 
         tif_kernel_generator.predict_all_output(a_cluster_annotations_stats_model, out_path , parts = 3,  normalize_scaler= a_normalize_scaler_class_BNDVIH )
 
 ```
@@ -254,6 +269,7 @@ Jeroen Esseveld.
 # Contact
 
 Contact us at vdwh@pzh.nl
+
 
 
 

@@ -256,20 +256,21 @@ class nso_tif_kernel_iterator_generator:
  
     def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize_scaler = False, multiprocessing = True ):
         """
-            A multiprocessing iterator which predicts all pixel in a .tif based on there kernels. optionally to do this the multiprocessing way.
+            A multiprocessing iterator which predicts all pixel in a .tif based on there kernels. 
+            Optionally to do this the multiprocessing way, default is true though so this has to be run from a terminal.
 
             For specifically large .tif files, this file has to be divided into multiple parts parameters are here which control that.
 
             For the other parameters check here below:
 
-            @param amodel: A prediciton model with has to have a predict function and uses kernels as input.
+            @param amodel: A prediction model with has to have a predict function and uses kernels as input.
             @param output_location: Location where to writes the results to in .shp file.
             @param aggregate_output: 50 cm is the default resolution but we can aggregate to 2m.
             @param parts: break the .tif file in multiple parts, this is needed because some .tif files can contain 3 billion pixels which won't fit in one pass in memory thus we divide a .tif file in multiple parts.
             @param begin_part: The part to begin with in order to skip certain parts.
             @param bands: Which bands of the .tif file to use from the .tif file by default this will be all the bands.
             @param fade: Whether to use fading kernels or not.
-            @param normalize_scaler: Whether to use normalize/scaler all the kernels or not, the input here so be a normalize/scaler function. You have to submit the scaler here if you want to use a scaler.
+            @param normalize_scaler: Whether to use a normalize/scaler on all the kernels or not, the input here so be a normalize/scaler function. You have to submit the normalizer/scaler as a argument here if you want to use a scaler, this has to be a custom  class like nso_ds_normalize_scaler.
             @param multiprocessing: Whether or not to use multiprocessing for loop for iterating across all the pixels.
         """
        
