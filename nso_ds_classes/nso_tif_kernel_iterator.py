@@ -121,6 +121,51 @@ class nso_tif_kernel_iterator_generator:
 
         return copy_kernel
 
+    def normalize_min_max(self, kernel):
+        """
+        
+            Normalize tif file with min max scaler.
+            @param kernel: a kernel to normalize 
+
+        """
+
+        copy_kernel = np.zeros(shape=kernel.shape)
+        for x in range(0, kernel.shape[0]):
+            copy_kernel[x] = (kernel[x] - np.min(kernel[x])) / (np.max(kernel[x]) - np.min(kernel[x]))*255
+        
+        return copy_kernel
+
+    def percentage_cloud(self, kernel, initial_threshold=145, initial_mean=29.441733905207673):
+
+        """
+
+            Create mask from tif file on first band.
+
+            @param kernel: a kernel to detect percentage clouds on
+            @param initial_threshold: an initial threshold for creating a mask  
+            @param initial_mean: an initial pixel mean value of the selected band
+        
+        """
+        
+        kernel = self.normalize_min_max(self.data)
+        new_threshold = round((initial_threshold*kernel[0].mean())/(initial_threshold*initial_mean) * initial_threshold,0)
+        copy_kernel = kernel[0].copy().copy()
+        for x in range(len(kernel[0])):
+            for y in range(len(kernel[0][x])):
+                if kernel[0][x][y] == 0:
+                    copy_kernel[x][y] = 1
+                elif kernel[0][x][y] <= new_threshold:
+                    if kernel[0][x][y] > 0:
+                        copy_kernel[x][y] = 2
+                else:
+                    copy_kernel[x][y] = 3
+        
+        percentage = round((copy_kernel == 3).sum() / (copy_kernel == 2).sum(),4)
+
+        return percentage
+
+
+
     def unfadify_tile_kernel(self, kernel):
         """
         Unfade a kernel, for example to plot it again.
