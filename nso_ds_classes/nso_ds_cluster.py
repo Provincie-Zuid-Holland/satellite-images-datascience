@@ -59,8 +59,6 @@ class nso_cluster_break:
             return cluster_centers_df
 
 
-
-
         def make_scaler_parts_pixel_df(self,parts=1, specific_part=0, multiprocessing = False, output_name = ""):
             """
             
@@ -99,15 +97,14 @@ class nso_cluster_break:
                     pixel_df = p.map(self.get_pixel_multiprocessing,permutations)
                     p.terminate()
                 else:
-                    pixel_df = [ self.get_pixel_multiprocessing(permutation) for permutation in permutations]
+                    pixel_df = [self.get_pixel_multiprocessing(permutation) for permutation in permutations]
 
                 print("Number of pixels:")
                 print(len(pixel_df))
                 
-                pixel_df= [elem for elem in pixel_df if elem is not None]
-
-                                
-                pixel_df = pd.DataFrame(pixel_df, columns= [ "band"+str(band) for band in range(1,len(pixel_df)+1)])
+                pixel_df = [elem for elem in pixel_df if elem is not None]
+                                 
+                pixel_df = pd.DataFrame(pixel_df, columns= [ "band"+str(band) for band in range(1,len(pixel_df[0])+1)])
                 pixel_df = self.make_normalized_scaler(pixel_df, output_name)
 
             return pixel_df
@@ -122,7 +119,7 @@ class nso_cluster_break:
             @return pixel_df: a pandas dataframe based on scaled rgb file.
             """
 
-            for band in pixel_df.columns[0:len(pixel_df)-2]:
+            for band in pixel_df.columns[0:len(pixel_df.columns)-1]:
 
                 band3_scaler = MinMaxScaler().fit(pixel_df[band].values.reshape(-1, 1))
                 joblib.dump(band3_scaler,"./scalers/"+output_name+"_"+str(band)+".save") 
@@ -136,7 +133,7 @@ class nso_cluster_break:
                     band6_scaler = MinMaxScaler().fit(pixel_df['band'+str(len(pixel_df))].values.reshape(-1, 1))               
                     joblib.dump(band6_scaler,ahn_scaler) 
 
-            pixel_df['band'+str(len(pixel_df))] = band6_scaler.transform(pixel_df['band'+str(len(pixel_df))].values.reshape(-1, 1))
+            pixel_df['band'+str(len(pixel_df.columns))] = band6_scaler.transform(pixel_df['band'+str(len(pixel_df.columns))].values.reshape(-1, 1))
 
             return pixel_df
 
