@@ -19,7 +19,7 @@ if __name__ == '__main__':
     y_kernel_height = 1
 
 
-    for file in glob.glob("E:/data/coepelduynen/202205*ndvi_height.tif"):
+    for file in glob.glob("E:/data/coepelduynen/2022051*ndvi_height.tif"):
 
         path_to_tif_file = file.replace("\\","/")
         print(path_to_tif_file)
