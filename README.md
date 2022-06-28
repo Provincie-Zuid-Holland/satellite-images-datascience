@@ -178,7 +178,7 @@ if __name__ == '__main__':
         if exists("./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save") is False:
                 print("No scalers found making scalers")
                 a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
-                a_nso_cluster_break.make_scaler_stepped_pixel_df(output_name = path_to_tif_file.split("/")[-1], parts=2, begin_part=1, multiprocessing= True)
+                a_nso_cluster_break.make_scaler_parts_pixel_df(output_name = path_to_tif_file.split("/")[-1], parts=2, begin_part=1, multiprocessing= True)
 
         # Initialize a scaler model for the iterater to be used.
         a_normalize_scaler_class_BNDVIH = scaler_class_BNDVIH( "./scalers/"+path_to_tif_file.split("/")[-1]+"_band3.save", \
