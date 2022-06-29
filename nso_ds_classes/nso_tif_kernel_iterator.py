@@ -360,7 +360,7 @@ class nso_tif_kernel_iterator_generator:
             if multiprocessing is True:
                 p = Pool()
                 seg_df = p.map(self.func_multi_processing_get_kernels,permutations)
-                print("Pool kernel fetching finised in: "+str(timer()-start)+" second(s)")
+                print("Pool kernel fetching finished in: "+str(timer()-start)+" second(s)")
             else:
                 seg_df = [self.func_multi_processing_get_kernels(permutation) for permutation in permutations ]
 
@@ -386,7 +386,7 @@ class nso_tif_kernel_iterator_generator:
             else:
                 seg_df = [self.func_multi_processing_predict(permutation) for permutation in seg_df ]    
 
-            print("Predicting finised in: "+str(timer()-start)+" second(s)")
+            print("Predicting finished in: "+str(timer()-start)+" second(s)")
 
             seg_df = pd.DataFrame(seg_df, columns = ['x_cor','y_cor','label'])
 
@@ -408,7 +408,7 @@ class nso_tif_kernel_iterator_generator:
                 seg_df["y_group"] = np.round(seg_df["rd_y"]/2)*2
                 seg_df = seg_df.groupby(["x_group", "y_group"]).agg(label  = ('label', \
                                                         lambda x: x.value_counts().index[0]))
-                print("Group by finised in: "+str(timer()-start)+" second(s)")
+                print("Group by finished in: "+str(timer()-start)+" second(s)")
                 
                 start = timer() 
                 seg_df["rd_x"] = list(map(lambda x: x[0], seg_df.index))
@@ -435,7 +435,7 @@ class nso_tif_kernel_iterator_generator:
             nso_ds_output.dissolve_gpd_output(seg_df, output_location.replace(".","_part_"+str(x_step)+"."))
             print(output_location.replace(".","_part_"+str(x_step)+"."))
 
-            print("Writing finised in: "+str(timer()-start)+" second(s)")
+            print("Writing finished in: "+str(timer()-start)+" second(s)")
             print(seg_df.columns)
             del seg_df
             begin_height = int(round(end_height+1))
