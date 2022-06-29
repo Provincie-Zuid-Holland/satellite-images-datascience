@@ -21,8 +21,8 @@ If you are a Windows user you have to install the dependencies via wheels. The w
 - [![Fiona>=1.8.13 ](https://img.shields.io/badge/Fiona-%3E%3D1.8.13-green)](https://pypi.org/project/Fiona/)
 - [![rasterio>=1.1.3 ](https://img.shields.io/badge/rasterio-%3E%3D1.1.3-blue)](https://rasterio.readthedocs.io/en/latest/)
 - [![Shapely>=1.7.0 ](https://img.shields.io/badge/Shapely-%3E%3D1.7.0-green)](https://shapely.readthedocs.io/en/stable/manual.html)
-- [![geopandas>=0.9.0](https://img.shields.io/badge/geopandas-%3E%3D0.9.0-blue)](https://geopandas.org/en/stable/)
-- [![scikit-learn==1.0.2](https://img.shields.io/badge/scikit--learn-%3D%3D1.0.2-brightgreen)](https://scikit-learn.org/stable/)
+- [![scikit-learn==1.0.2](https://img.shields.io/badge/scikit--learn-%3D%3D1.0.2-blue)](https://scikit-learn.org/stable/)
+- [![NumPy==1.22.4](https://img.shields.io/badge/NumPy-%3D%3D1.22.4-green)](https://numpy.org/)
 
 These should be installed in de following order: first GDAL, then Fiona and then rasterio. After these you can install the rest.
 
@@ -31,6 +31,14 @@ Download the wheels according to your system settings. For instance, wheel raste
 Or else check out this stack overflow post:
 https://gis.stackexchange.com/questions/2276/installing-gdal-with-python-on-windows 
 
+In addition to the above wheels, the following packages are also needed:
+- geopandas
+- matplotlib
+- SQLAlchemy
+- tqdm
+- yellowbrick
+
+Use this [requirements](requirements_extra.txt) file for installation.
 
 # Model input.
  
