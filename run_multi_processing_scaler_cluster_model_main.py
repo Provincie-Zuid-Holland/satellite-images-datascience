@@ -5,7 +5,7 @@ from nso_ds_classes.nso_ds_models import cluster_scaler_BNDVIH_model
 from nso_ds_classes.nso_ds_normalize_scaler import scaler_class_BNDVIH
 import nso_ds_classes.nso_ds_cluster as nso_ds_cluster 
 from os.path import exists
-
+import run_settings
 
 """ 
 This is now the default model.
@@ -19,13 +19,13 @@ if __name__ == '__main__':
     y_kernel_height = 1
 
 
-    for file in glob.glob("E:/data/coepelduynen/2022051*ndvi_height.tif"):
+    for file in glob.glob(run_settings.input_folder_tif_files):
 
         path_to_tif_file = file.replace("\\","/")
         print(path_to_tif_file)
-        out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
+        out_path = run_settings.output_folder+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
         tif_kernel_generator = nso_tif_kernel_iterator.nso_tif_kernel_iterator_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
-        cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
+        cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers_dunes.csv"
 
                
         # Make clusters if a cluster file does not yet exist
