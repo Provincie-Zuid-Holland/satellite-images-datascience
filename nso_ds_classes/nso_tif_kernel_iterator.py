@@ -135,7 +135,7 @@ class nso_tif_kernel_iterator_generator:
         
         return copy_kernel
 
-    def percentage_cloud(self, kernel, initial_threshold=145, initial_mean=29.441733905207673):
+    def percentage_cloud(self, initial_threshold=145, initial_mean=29.441733905207673):
 
         """
 
@@ -147,16 +147,21 @@ class nso_tif_kernel_iterator_generator:
         
         """
         
-        kernel = self.normalize_min_max(self.data)
-        new_threshold = round((initial_threshold*kernel[0].mean())/(initial_threshold*initial_mean) * initial_threshold,0)
-        copy_kernel = kernel[0].copy().copy()
-        for x in range(len(kernel[0])):
-            for y in range(len(kernel[0][x])):
-                if kernel[0][x][y] == 0:
+        # Make sure the blue band is used in the third array element.
+        kernel = self.normalize_min_max(self.data[2])
+        new_threshold = round((initial_threshold*kernel.mean())/(initial_threshold*initial_mean) * initial_threshold,0)
+        print(new_threshold)
+        copy_kernel = kernel.copy().copy()
+
+
+        for x in range(len(kernel)):
+            for y in range(len(kernel[x])):
+                if kernel[x][y] == 0:
                     copy_kernel[x][y] = 1
-                elif kernel[0][x][y] <= new_threshold:
-                    if kernel[0][x][y] > 0:
+                elif kernel[x][y] <= new_threshold:
+                    if kernel[x][y] > 0:
                         copy_kernel[x][y] = 2
+                    
                 else:
                     copy_kernel[x][y] = 3
         
@@ -301,12 +306,12 @@ class nso_tif_kernel_iterator_generator:
  
     def predict_all_output(self, amodel, output_location, aggregate_output = True, parts = 10, begin_part = 0, bands = [1,2,3,4,5,6], fade = False, normalize_scaler = False, multiprocessing = True ):
         """
-            A multiprocessing iterator which predicts all pixel in a .tif based on there kernels. 
-            Optionally to do this the multiprocessing way, default is true though so this has to be run from a terminal.
+            A multiprocessing iterator which predicts all pixel in a raster .tif, based on there kernels. 
+            Multiprocessing on default is true  so this has to be run from a terminal.
 
-            For specifically large .tif files, this file has to be divided into multiple parts parameters are here which control that.
+            For specifically large .tif files, this file has to be divided into multiple parts.
+            So it can fit into memory, parameters are here which can control that.
 
-            For the other parameters check here below:
 
             @param amodel: A prediction model with has to have a predict function and uses kernels as input.
             @param output_location: Location where to writes the results to in .shp file.

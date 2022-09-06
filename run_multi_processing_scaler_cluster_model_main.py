@@ -24,12 +24,15 @@ if __name__ == '__main__':
         path_to_tif_file = file.replace("\\","/")
         print(path_to_tif_file)
         out_path = run_settings.output_folder+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
+        
+        # Initialize the iterator.
         tif_kernel_generator = nso_tif_kernel_iterator.nso_tif_kernel_iterator_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
         cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers_dunes.csv"
 
                
         # Make clusters if a cluster file does not yet exist
         if exists(cluster_centers_file) is False:
+            print("No cluster centers found, making new ones!")
             a_nso_cluster_break = nso_ds_cluster.nso_cluster_break(tif_kernel_generator)
             a_nso_cluster_break.get_stepped_pixel_df(output_name = path_to_tif_file.split("/")[-1], parts=2, begin_part=1, multiprocessing= True)
             
@@ -51,7 +54,5 @@ if __name__ == '__main__':
                                                                             scaler_file_band5 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band5.save", \
                                                                             scaler_file_band6 = "./scalers/ahn4.save")
 
-
-
-            
-        tif_kernel_generator.predict_all_output(a_cluster_annotations_stats_model, out_path , parts = 3,  normalize_scaler= a_normalize_scaler_class_BNDVIH )
+           
+        tif_kernel_generator.predict_all_output(a_cluster_annotations_stats_model, out_path , parts = run_settings.parts,  normalize_scaler= a_normalize_scaler_class_BNDVIH )

@@ -11,7 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from nso_ds_classes.nso_ds_models import euclidean_distance_kernels
 import joblib
 from os.path import exists
-
+from random import sample
 
 
 
@@ -58,16 +58,30 @@ class nso_cluster_break:
 
             return cluster_centers_df
 
+        def get_random_samples(a, b, n):
+            """
+            Generate n samples from product a,b
 
-        def make_scaler_parts_pixel_df(self,parts=1, specific_part=0, multiprocessing = False, output_name = ""):
+            @param a: a a array with numbers.
+            @param b: a b array with numbers.
+            @return the sampled permutations of the product of a and b.
+            """
+
+            n_prod = len(a) * len(b)
+            indices = sample(range(n_prod), n)
+            return [(a[idx % len(a)], b[idx // len(a)]) for idx in indices]
+
+        def make_scalers_pixel_df(self,parts=1, specific_part=0, sample = False, multiprocessing = False, output_name = ""):
             """
             
             This function makes a scaler on bands in a .tif file, which can be based on parts of a .tif file instead of the whole file.
             Breaking the .tif file in multiple parts is sometimes used to because the regular file can be too large.
 
+            TODO: Make this a sample part.
+
             @param parts: The number of parts of which to divide a .tif file into.
             @param specific_part: The specific part to make the scaler on.
-            @param multiprocessing: multiprocessing wether to use
+            @param multiprocessing: multiprocessing wether to use.
             """
 
             total_height = self.kernel_generator.get_height() - self.kernel_generator.x_size
