@@ -292,8 +292,9 @@ class nso_tif_kernel_iterator_generator:
         try:
 
             # TODO: Make the bands selected able
-            label = self.model.predict([input_x_y])
-            return [input_x_y[len(input_x_y)-1][0], input_x_y[len(input_x_y)-1][1], label]
+            coords = input_x_y[-1]
+            label = self.model.predict([input_x_y[:-1]])
+            return [coords[0], coords[1], label]
 
         except ValueError as e:                  
                         if str(e) != "Center pixel is empty":                          

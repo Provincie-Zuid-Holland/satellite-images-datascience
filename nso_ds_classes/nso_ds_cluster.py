@@ -71,7 +71,7 @@ class nso_cluster_break:
             indices = sample(range(n_prod), n)
             return [(a[idx % len(a)], b[idx // len(a)]) for idx in indices]
 
-        def make_scalers_pixel_df(self,parts=1, specific_part=0, sample = False, multiprocessing = False, output_name = ""):
+        def make_scalers_pixel_df(self,parts=1, specific_part=0,  multiprocessing = False, output_name = "",sample = False,):
             """
             
             This function makes a scaler on bands in a .tif file, which can be based on parts of a .tif file instead of the whole file.

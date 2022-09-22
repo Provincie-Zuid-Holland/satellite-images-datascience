@@ -314,6 +314,41 @@ class cluster_scaler_BNDVIH_model():
         """
         return self.labels[self.labels.index == int(index)]['label'].values[0]
 
+class cluster_scaler_BH_model():
+    """ 
+        This model predicts using cluster centers and scalers.
+
+        The cluster centers and the scalers should already be premade before the prediction can happens.
+    """
+    def __init__(self, cluster_centers_file_name = "./cluster_centers/normalized_5_BH_cluster_centers.csv"):
+
+        # TODO: Read a parametered file.
+        
+        self.cluster_centers = np.array(pd.read_csv(cluster_centers_file_name)[["band3","band6"]].values)
+        self.labels = pd.read_csv(cluster_centers_file_name)
+        
+
+    def predict(self,kernel):
+        """
+        Predict the class of a kernel based on annotations.
+
+        @param kernel: A kernel to be predicted.
+        @return: class in int type of the class.
+        """
+        # Use only blue , ndvi and height bands, note that these are hard coded on the number within the band.
+        kernel = [kernel[0][2],kernel[0][5]]
+        return np.argmin([euclidean_distance_kernels(x,kernel) for x in self.cluster_centers ])
+
+    def get_class_label(self,index):
+        """
+        Converts a class integer into a string class value.
+
+        @parm index: the class integer 
+        @return string value for the class.
+
+        """
+        return self.labels[self.labels.index == int(index)]['label'].values[0]
+
 
 ### Deep learning models here.
 def standard_convolutional_network(size_x_matrix =32 ,size_y_matrix = 32,bands = 4, no_classes =5):
