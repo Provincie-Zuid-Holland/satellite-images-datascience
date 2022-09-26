@@ -135,9 +135,9 @@ class nso_cluster_break:
 
             for band in pixel_df.columns[0:len(pixel_df.columns)-1]:
 
-                band3_scaler = MinMaxScaler().fit(pixel_df[band].values.reshape(-1, 1))
-                joblib.dump(band3_scaler,"./scalers/"+output_name+"_"+str(band)+".save") 
-                pixel_df[band] = band3_scaler.transform(pixel_df[band].values.reshape(-1, 1))
+                band_scaler = MinMaxScaler().fit(pixel_df[band].values.reshape(-1, 1))
+                joblib.dump(band_scaler,"./scalers/"+output_name+"_"+str(band)+".save") 
+                pixel_df[band] = band_scaler.transform(pixel_df[band].values.reshape(-1, 1))
             
             
             if exists(ahn_scaler):
