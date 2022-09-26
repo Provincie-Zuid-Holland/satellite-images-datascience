@@ -1,9 +1,17 @@
+"""
+
+This file is used to scale/normalize the spectral values of the NSO Superview satellite bands.
+The .tif images is sampled and from the sample scalers are made. 
+
+Because of the large, partly due to atmosphere, interference in the satellite images normalization is needed for the model to correctly predict.
+"""
 
 import joblib
 import pandas as pd
 import itertools
 import tqdm
 from multiprocessing import Pool
+from sklearn.preprocessing import MinMaxScaler
 
 class scaler_class_BNDVIH:
     """
@@ -40,8 +48,8 @@ class scaler_class_BNDVIH:
         pixel_df_copy[col_names[1]] = self.scaler_band5.transform(pixel_df_copy[col_names[1]].values.reshape(-1, 1))
         pixel_df_copy[col_names[2]] = self.scaler_band6.transform(pixel_df_copy[col_names[2]].values.reshape(-1, 1))
         return pixel_df_copy
-    
-class scaler_class_BH:
+
+class scaler_class_all:
     """
     This class is used to scale blue, ndvi and height columns of a pandas dataframe from a .tif file.
     Which should be band 3, band 5 and band 6 respectively.
@@ -49,7 +57,7 @@ class scaler_class_BH:
     Scalers should have been made indepently!
     
     """
-    def __init__(self, scaler_file_band3 = "", scaler_file_band6 = "") :
+    def __init__(self, scaler_file_band1 = "", scaler_file_band2 = "", scaler_file_band3 = "", scaler_file_band4 = "", scaler_file_band5 = "", scaler_file_band6 = "") :
         """
         Init of this class.
 
@@ -58,6 +66,52 @@ class scaler_class_BH:
         @param scaler_file_band6: Path to a file which contains the scaler for band 6.
         
         """
+
+        self.scaler_band1 = joblib.load(scaler_file_band1)
+        self.scaler_band2 = joblib.load(scaler_file_band2)
+        self.scaler_band3 = joblib.load(scaler_file_band3)
+        self.scaler_band4 = joblib.load(scaler_file_band4)
+        self.scaler_band5 = joblib.load(scaler_file_band5)
+        self.scaler_band6 = joblib.load(scaler_file_band6)
+
+
+    def transform(self,pixel_df):
+        """
+        Transforms the blue, ndvi and height columns of a pandas dataframe.
+
+        @param pixel_df: dataframe in which the blue, ndvi and height column have to be scaled.
+        @return: dataframe which scaled blue, ndvi and height bands.
+        
+        """
+
+        pixel_df['band1'] = self.scaler_band3.transform(pixel_df['band1'].values.reshape(-1,1))        
+        pixel_df['band2'] = self.scaler_band6.transform(pixel_df['band2'].values.reshape(-1, 1))
+        pixel_df['band3'] = self.scaler_band3.transform(pixel_df['band3'].values.reshape(-1,1))        
+        pixel_df['band4'] = self.scaler_band6.transform(pixel_df['band4'].values.reshape(-1, 1))
+        pixel_df['band5'] = self.scaler_band3.transform(pixel_df['band5'].values.reshape(-1,1))        
+        pixel_df['band6'] = self.scaler_band6.transform(pixel_df['band6'].values.reshape(-1, 1))
+
+        return pixel_df
+
+class scaler_class_BH:
+    """
+    This class is used to scale blue, ndvi and height columns of a pandas dataframe from a .tif file.
+    Which should be band 3, band 5 and band 6 respectively.
+
+    Scalers should have been made indepently!
+    
+    """
+    def __init__(self,  scaler_file_band3 = "",  scaler_file_band6 = "") :
+        """
+        Init of this class.
+
+        @param scaler_file_band3: Path to a file which contains the scaler for band 3.
+        @param scaler_file_band5: Path to a file which contains the scaler for band 5.
+        @param scaler_file_band6: Path to a file which contains the scaler for band 6.
+        
+        """
+
+
         self.scaler_band3 = joblib.load(scaler_file_band3)
         self.scaler_band6 = joblib.load(scaler_file_band6)
 
@@ -75,9 +129,28 @@ class scaler_class_BH:
         return pixel_df
 
 class scaler_normalizer_retriever:
+    """
+    
+    This class is used to make scalers/normalizers.
+    These scalers are made by sampling the tif file a kernel generator is 
+    
+    """
 
     def __init__(self, a_kernel_generator):
             self.kernel_generator =  a_kernel_generator
+    
+    def get_pixel_multiprocessing(self, input_x_y):
+            try:
+                        # Fetches the real coordinates for the row and column needed for writing to a geoformat.
+                        #actual_cor = self.get_x_cor_y_cor(x,y)  
+                       
+                        # TODO: Set normalisation if used.
+                        #kernel = self.normalize_tile_kernel(kernel) if self.normalize == True else kernel                                       
+                        return self.kernel_generator.get_pixel_value( input_x_y[0],  input_x_y[1])
+
+            except Exception as e:
+                if str(e) != "Center pixel is empty":                          
+                            print(e)
 
     def make_scalers_pixel_df(self,parts=1, specific_part=0,  multiprocessing = False, output_name = "",sample = False,):
             """
