@@ -75,7 +75,7 @@ class scaler_class_all:
         self.scaler_band6 = joblib.load(scaler_file_band6)
 
 
-    def transform(self,pixel_df):
+    def transform(self,pixel_df, col_names = ['band1','band2','band3','band4','band5',"band6"]):
         """
         Transforms the blue, ndvi and height columns of a pandas dataframe.
 
@@ -84,12 +84,12 @@ class scaler_class_all:
         
         """
 
-        pixel_df['band1'] = self.scaler_band3.transform(pixel_df['band1'].values.reshape(-1,1))        
-        pixel_df['band2'] = self.scaler_band6.transform(pixel_df['band2'].values.reshape(-1, 1))
-        pixel_df['band3'] = self.scaler_band3.transform(pixel_df['band3'].values.reshape(-1,1))        
-        pixel_df['band4'] = self.scaler_band6.transform(pixel_df['band4'].values.reshape(-1, 1))
-        pixel_df['band5'] = self.scaler_band3.transform(pixel_df['band5'].values.reshape(-1,1))        
-        pixel_df['band6'] = self.scaler_band6.transform(pixel_df['band6'].values.reshape(-1, 1))
+        pixel_df[col_names[0]] = self.scaler_band1.transform(pixel_df[col_names[0]].values.reshape(-1,1))        
+        pixel_df[col_names[1]] = self.scaler_band2.transform(pixel_df[col_names[1]].values.reshape(-1, 1))
+        pixel_df[col_names[2]] = self.scaler_band3.transform(pixel_df[col_names[2]].values.reshape(-1,1))        
+        pixel_df[col_names[3]] = self.scaler_band4.transform(pixel_df[col_names[3]].values.reshape(-1, 1))
+        pixel_df[col_names[4]] = self.scaler_band5.transform(pixel_df[col_names[4]].values.reshape(-1,1))        
+        pixel_df[col_names[5]] = self.scaler_band6.transform(pixel_df[col_names[5]].values.reshape(-1, 1))
 
         return pixel_df
 
