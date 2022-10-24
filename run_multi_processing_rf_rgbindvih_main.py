@@ -12,7 +12,7 @@ import pickle
 
 
 if __name__ == '__main__':
-    filename ="./models/randomforest_classifier_coepelduynen_2019_2022_scaled.sav"
+    filename ="./models/randomforest_classifier_coepelduynen_contrast_annotations_grid_search_all_data_2019_2022_small.sav"
     loaded_model = pickle.load(open(filename, 'rb'))
 
     # Set a kernel generator.

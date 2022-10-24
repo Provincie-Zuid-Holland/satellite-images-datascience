@@ -333,7 +333,6 @@ class nso_tif_kernel_iterator_generator:
         begin_height = self.x_size_begin
         end_height = self.x_size_begin+height_parts
 
-        total_height = self.get_height()-self.x_size
         total_width = self.get_width()-self.y_size
 
         height_parts = total_height/parts

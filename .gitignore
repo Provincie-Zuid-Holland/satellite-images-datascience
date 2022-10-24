@@ -2,3 +2,11 @@
 coordinates_rd_awd.csv
 ./annotations/*
 ./scalers/*
+scalers/*
+models/*
+./models/*
+bfg-1.14.0.jar
+score_model/annotations/*
+annotaties_coepelduynen_to_pixel.csv
+annotaties_coepelduynen_to_pixel_scaled.csv
+score_model/annotations/*
