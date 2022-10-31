@@ -8,7 +8,11 @@ import run_settings
 from nso_ds_classes.nso_ds_normalize_scaler import scaler_class_all
 import pickle
 
+"""
 
+This class uses a sklearn model to predict all pixels in 
+
+"""
 
 
 if __name__ == '__main__':
