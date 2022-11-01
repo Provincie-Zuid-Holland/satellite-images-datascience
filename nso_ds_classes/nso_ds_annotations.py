@@ -11,7 +11,8 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(path_to_tif, path_to_p
         In order to be used in a model. 
 
         @param path_to_tif: The raster file of a satellite image from which the pixel values have to extracted.
-        @param  path_to_polygons: the path to the i
+        @param  path_to_polygons: the path to the annotations in polygons which will  be used to crop the image for pixels with
+        @return a pandas dataframe which pixel values for annotations.
         """
         geo_file = gpd.read_file(path_to_polygons)
         src = rasterio.open(path_to_tif)
