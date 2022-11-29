@@ -14,6 +14,8 @@ In addition this repository contains all the models  which we have used for the 
 
 Through out this document we will be referring to image object detection and image segmentation as segmentation.
 
+Further more a model is made on annotations found in make_train_model_on_annotations_coepelduynen.ipynb
+
 # Dependencies.
 If you are a Windows user you have to install the dependencies via wheels. The wheels for the following dependencies should be downloaded from https://www.lfd.uci.edu/~gohlke/pythonlibs/:
 

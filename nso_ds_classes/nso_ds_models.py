@@ -284,6 +284,8 @@ class cluster_scaler_BNDVIH_model():
         This model predicts using cluster centers and scalers.
 
         The cluster centers and the scalers should already be premade before the prediction can happens.
+
+        It uses only blue, ndvi and height to make a prediction.
     """
     def __init__(self, cluster_centers_file_name = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"):
 

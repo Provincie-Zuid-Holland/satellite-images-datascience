@@ -10,3 +10,5 @@ score_model/annotations/*
 annotaties_coepelduynen_to_pixel.csv
 annotaties_coepelduynen_to_pixel_scaled.csv
 score_model/annotations/*
+
+scalers/*
