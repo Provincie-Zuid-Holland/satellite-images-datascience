@@ -1,6 +1,6 @@
 from typing import MutableMapping
 import sklearn
-import nso_ds_classes.nso_tif_kernel_iterator as nso_tif_kernel_iterator
+from tif_model_iterator import tif_kernel_iterator as nso_tif_kernel_iterator
 import nso_ds_classes.nso_ds_models as nso_ds_models
 import glob
 from os.path import exists
