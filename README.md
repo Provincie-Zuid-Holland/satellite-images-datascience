@@ -1,23 +1,22 @@
 # Introduction 
 
 
-This repository contains all the annotation training data and models used by the PZH Natura 200 remote sensing project.
+This repository contains all the annotation training data and models used by the PZH Natura 2000 remote sensing project.
 In short for this project we want to use machine learning on land satellite images to monitor each pixel distribution of various nature types in nature protected areas across time for various climate/nature policies.
 So the models here predicts for each pixel in a land satellite image a nature type, these types could include: Grass,Forest,Sand ..etc based on the learned annotations.
 
-Annotated pixels pandas dataframe are stored in the annotations folder, as such it is open for the public to train their own model.
+Annotated pixels pandas dataframe are stored in the data/annotations folder, as such it is open for the public to train their own model.
 This means that we took pixel values from in our case the SuperView land satellite images for annotated nature types.
 Based on these pixel value we want to predict what kind of nature type it is.
 
-Look in the data/annotations_pixel_dataframes folder for more information.
+Look in the data/annotation readme.md file for more information.
 
 3 types of pixel based models are here: a custom unsupervised supervised spectral contrast model, a keras deep learning network and random forest model trained on annotations.
 
 After some experimentation for our project we went for the random forest model trained on annotations, giving us the best model results for the best execution performance.
 
 Since pixel based prediction is computationally intensive because of the large amount of pixels performance of a model is also a important criteria.
-
-
+See this repository for how we run these models: [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator)
 
 # Dependencies.
 If you are a Windows user you have to install the dependencies via wheels. The wheels for the following dependencies should be downloaded from https://www.lfd.uci.edu/~gohlke/pythonlibs/:
@@ -56,7 +55,7 @@ This input data is generated in .tif files which is done in the other satellite 
 And for the height data here: [Here]( https://github.com/Provincie-Zuid-Holland/vdwh_ahn_processing )
 
 # (Image Processing) Kernels.
-The main functionality of this repository is to extract image kernels and the multiprocessing for loop for looping over all the pixels and/or image kernels in a given satellite .tif file to make predictions on them.
+The main functionality of [this](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator) repository is to extract image kernels and the multiprocessing for loop for looping over all the pixels and/or image kernels in a given satellite .tif file to make predictions on them.
 
 The following picture gives a illustration about how this extracting  of kernels is done:
 ![Alt text](kernel_extract.png?raw=true "Title")
@@ -109,12 +108,12 @@ Note that this is functionality is also found at [this](https://github.com/Provi
 
 We have tried different models all of which below are given descriptions, our custom Scaled Spectral Profile Contrast model, a random forest model based on annotations training data and a deep learning model based on annotations training data.
 
-After research we decided to go for the random forest model based on annotations based on annotations training data.
-Thus model gave us the best execution performance and model performance, since we are predicting a lot of pixels execution performance is also important
+After some research we decided to go for the random forest model based on annotations based on annotations training data.
+This model gave us the best execution performance and model performance, since we are predicting a lot of pixels, execution performance is also important
 
 ## Random forest model based on annotated training data.
 
-After various testing we decided that annotating SuperView Satellite data in necessary to have objective dataset to score models on and the train a model on.
+After various testing we decided that annotating SuperView Satellite data is necessary to have objective dataset to score models on and the train a model on.
 
 ### Annotations.
 
@@ -131,9 +130,18 @@ These labels vary by nature area, for the Coepelduynen we annotated the these la
 | Schaduw | 
 | Vochtige duinvallei | 
 
+Are found in the data/annotations folder, read the readme.md file for more information.
+
+## Random forest model trained on annotations.
+
+This ended being the used model based on it's accuracy and prediction speed performance.
+It simply is a random forest model 
+
+The notebook found in ./annotations_models/Coe
 
 
- are found in the data/annotations folder
+
+
 ## Scaled Spectral Profile Contrast Model
 
 This models can be seen as a combination of unsupervised and supervised models because it's require training annotation data which the other models do require.
