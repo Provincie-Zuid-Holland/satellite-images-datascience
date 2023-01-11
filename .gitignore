@@ -9,7 +9,8 @@ bfg-1.14.0.jar
 score_model/annotations/*
 annotaties_coepelduynen_to_pixel.csv
 annotaties_coepelduynen_to_pixel_scaled.csv
-VoornesDuin_polyg2pixel_scaled_balanced_sample.pkl
 score_model/annotations/*
-
+/data/annotations/annotations_pixel_dataframes/VoornesDuin_polyg2pixel_scaled_balanced_sample.pkl
+VoornesDuin_polyg2pixel_scaled_balanced_sample.pkl
 scalers/*
+
