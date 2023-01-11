@@ -54,7 +54,22 @@ This input data is generated in .tif files which is done in the other satellite 
 
 And for the height data here: [Here]( https://github.com/Provincie-Zuid-Holland/vdwh_ahn_processing )
 
-# (Image Processing) Kernels.
+
+## Input normalization/scaling.
+
+For all the models we have used we have normalized/scaled the RGBIH values between 0 and 1.
+This is done because of the unique RGBIH values a satellite image can have due to atmospheric influence thus normalization could theoretically reduce this influence.
+
+In the notebook /scalers_make_run/run_make_scalers_normalize.ipynb normalize/scaling is done.
+
+The resulting data from this can be found at:
+
+Coepelduynen:
+https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/coepelduynen/annotations_pixel_dataframes/annotaties_coepelduynen_to_pixel_scaled.csv
+
+
+
+# Running a model on (Image Processing) Kernels.
 The main functionality of [this](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator) repository is to extract image kernels and the multiprocessing for loop for looping over all the pixels and/or image kernels in a given satellite .tif file to make predictions on them.
 
 The following picture gives a illustration about how this extracting  of kernels is done:
@@ -114,6 +129,11 @@ This model gave us the best execution performance and model performance, since w
 ## Random forest model based on annotated training data.
 
 After various testing we decided that annotating SuperView Satellite data is necessary to have objective dataset to score models on and the train a model on.
+For which we handmade annotated Satellite data.
+
+This ended being the used model based on it's accuracy and prediction speed performance.
+The notebook where the model is trained can be found in ./annotations_models/Coepelduynen/random_forest/make_train_model_on_annotations_coepelduynen.ipynb
+
 
 ### Annotations.
 
@@ -131,16 +151,6 @@ These labels vary by nature area, for the Coepelduynen we annotated the these la
 | Vochtige duinvallei | 
 
 Are found in the data/annotations folder, read the readme.md file for more information.
-
-## Random forest model trained on annotations.
-
-This ended being the used model based on it's accuracy and prediction speed performance.
-It simply is a random forest model 
-
-The notebook can be found in ./annotations_models/Coepelduynen/random_forest/make_train_model_on_annotations_coepelduynen.ipynb
-
-
-
 
 ## Scaled Spectral Profile Contrast Model
 
