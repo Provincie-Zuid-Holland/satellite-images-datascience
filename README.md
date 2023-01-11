@@ -137,7 +137,7 @@ Are found in the data/annotations folder, read the readme.md file for more infor
 This ended being the used model based on it's accuracy and prediction speed performance.
 It simply is a random forest model 
 
-The notebook found in ./annotations_models/Coe
+The notebook can be found in ./annotations_models/Coepelduynen/random_forest/make_train_model_on_annotations_coepelduynen.ipynb
 
 
 
