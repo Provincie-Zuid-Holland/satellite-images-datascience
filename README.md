@@ -68,7 +68,7 @@ Coepelduynen:
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/coepelduynen/annotations_pixel_dataframes/annotaties_coepelduynen_to_pixel_scaled.csv
 
 Voornes Duin:
-https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes_Duin/annotations_pixel_dataframes/VoornesDuin_polyg2pixel_scaled_new.pkl
+https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes Duin/annotations_pixel_dataframes/VoornesDuin_polyg2pixel_scaled_new.pkl
 
 
 # Running a model on (Image Processing) Kernels.
