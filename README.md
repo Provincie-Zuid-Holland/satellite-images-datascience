@@ -1,5 +1,4 @@
-# Introduction 
-
+# Introduction
 
 This repository contains all the annotation training data and models used by the PZH Natura 2000 remote sensing project.
 In short for this project we want to use machine learning on land satellite images to monitor each pixel distribution of various nature types in nature protected areas across time for various climate/nature policies.
@@ -18,42 +17,26 @@ After some experimentation for our project we went for the random forest model t
 Since pixel based prediction is computationally intensive because of the large amount of pixels performance of a model is also a important criteria.
 See this repository for how we run these models: [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator)
 
-# Dependencies.
-If you are a Windows user you have to install the dependencies via wheels. The wheels for the following dependencies should be downloaded from https://www.lfd.uci.edu/~gohlke/pythonlibs/:
+# Installation
 
-- [![GDAL>=3.0.4 ](https://img.shields.io/badge/GDAL-%3E%3D3.0.4-blue)](https://gdal.org/)
-- [![Fiona>=1.8.13 ](https://img.shields.io/badge/Fiona-%3E%3D1.8.13-green)](https://pypi.org/project/Fiona/)
-- [![rasterio>=1.1.3 ](https://img.shields.io/badge/rasterio-%3E%3D1.1.3-blue)](https://rasterio.readthedocs.io/en/latest/)
-- [![Shapely>=1.7.0 ](https://img.shields.io/badge/Shapely-%3E%3D1.7.0-green)](https://shapely.readthedocs.io/en/stable/manual.html)
-- [![scikit-learn==1.0.2](https://img.shields.io/badge/scikit--learn-%3D%3D1.0.2-blue)](https://scikit-learn.org/stable/)
-- [![NumPy==1.22.4](https://img.shields.io/badge/NumPy-%3D%3D1.22.4-green)](https://numpy.org/)
+When working with 64x Windows and Anaconda for your python environment management execute the following terminal commands in order:
 
-These should be installed in de following order: first GDAL, then Fiona and then rasterio. After these you can install the rest.
-
-Download the wheels according to your system settings. For instance, wheel rasterio 1.2.10 cp39 cp39 win_amd64.whl is used with the 64-bit version of Windows and a 3.9 version of python. Install the wheel with pip install XXX.XX.XX.whl.
-
-Or else check out this stack overflow post:
-https://gis.stackexchange.com/questions/2276/installing-gdal-with-python-on-windows 
-
-In addition to the above wheels, the following packages are also needed:
-- geopandas
-- matplotlib
-- SQLAlchemy
-- tqdm
-- yellowbrick
-
-Use this [requirements](requirements_extra.txt) file for installation.
+```sh
+conda create -n satellite-images-nso-datascience python=3.9 -y
+conda activate satellite-images-nso-datascience
+pip install -r requirements.txt
+pip install .
+```
 
 # Model input.
- 
+
 The following figure represents the input we have for a model:
 
 ![Alt text](basic_model_input.png?raw=true "Title")
 
 This input data is generated in .tif files which is done in the other satellite images nso github repository [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_extractor)
 
-And for the height data here: [Here]( https://github.com/Provincie-Zuid-Holland/vdwh_ahn_processing )
-
+And for the height data here: [Here](https://github.com/Provincie-Zuid-Holland/vdwh_ahn_processing)
 
 ## Input normalization/scaling.
 
@@ -70,13 +53,12 @@ https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/coep
 Voornes Duin:
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes_Duin/annotations_pixel_dataframes/VoornesDuin_polyg2pixel_scaled_new.pkl
 
-
 # Running a model on (Image Processing) Kernels.
+
 The main functionality of [this](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator) repository is to extract image kernels and the multiprocessing for loop for looping over all the pixels and/or image kernels in a given satellite .tif file to make predictions on them.
 
-The following picture gives a illustration about how this extracting  of kernels is done:
+The following picture gives a illustration about how this extracting of kernels is done:
 ![Alt text](kernel_extract.png?raw=true "Title")
-
 
 Here below we will have a code example about how this work. In this example we will use a Euclidean distance model to segment all the pixels in a .tif file into segments that are specified in a annotations file.
 
@@ -101,7 +83,7 @@ tif_kernel_generator = nso_tif_kernel_iterator. .nso_tif_kernel_iterator_generat
 kernel = tif_kernel_generator.get_kernel_for_x_y(x_row,y_row )
 kernel.shape
 #output: (4, 32, 32)
-# This .tif file contains 4 dimensions in RGBI 
+# This .tif file contains 4 dimensions in RGBI
 
 # Set a fade kernel which gives more weight to the centre pixel in the kernel.
 tif_kernel_generator.set_fade_kernel()
@@ -112,12 +94,11 @@ euclidean_distance_model = nso_ds_models.euclidean_distance_model(tif_kernel_gen
 # Set annotations for the model to predict on.
 euclidean_distance_model.set_ec_distance_custom_annotations(path_to_tif_file.split("/")[-1], fade=True)
 
-# Iterates and predicts all the pixels in a .tif file with a particular model and stores the dissolved results in the out_path file in a multiprocessing way. So this has to be run from a terminal.  
+# Iterates and predicts all the pixels in a .tif file with a particular model and stores the dissolved results in the out_path file in a multiprocessing way. So this has to be run from a terminal.
 tif_kernel_generator.predict_all_output(euclidean_distance_model, out_path , parts = 3, fade=True)
 ```
 
 Note that this is functionality is also found at [this](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_extractor) repository.
-
 
 # Models
 
@@ -136,21 +117,20 @@ For which we handmade annotated Satellite data.
 This ended being the used model based on it's accuracy and prediction speed performance.
 The notebook where the model is trained can be found in ./annotations_models/Coepelduynen/random_forest/make_train_model_on_annotations_coepelduynen.ipynb
 
-
 ### Annotations.
 
 We handmade all annotations by using Superview Satellite and drawing the different labels on them.
 These labels vary by nature area, for the Coepelduynen we annotated the these labels.
 
-| Labels       | 
-| ----------- | 
-| Gras      | 
-| Zand   | 
-| Struweel  | 
-| Bos | 
-| Asfalt | 
-| Schaduw | 
-| Vochtige duinvallei | 
+| Labels              |
+| ------------------- |
+| Gras                |
+| Zand                |
+| Struweel            |
+| Bos                 |
+| Asfalt              |
+| Schaduw             |
+| Vochtige duinvallei |
 
 Are found in the data/annotations folder, read the readme.md file for more information.
 
@@ -164,17 +144,19 @@ Based on these Spectral Profile Contrast classes we predict if a pixel is a cert
 Most of these models are stored in the nso_ds_classes /nso_ds_models.py file.
 
 ### Predetermined Spectral Profile Contrast classes
+
 First Predetermined Spectral Profile Contrast classes centers are made which classify classes based on there contrasts. These classes were made with domain expertise and descriptive median data of nature types
 
 These are the current cluster centers we are using:
 
 ![Alt text](cluster_centers_contrast_model.PNG?raw=true "Title")
 
-Were band 3 is the color blue, band 5 is NDVI more about what NDVI is [Here](https://www.sciencedirect.com/topics/earth-and-planetary-sciences/normalized-difference-vegetation-index#:~:text=The%20NDVI%20is%20a%20dimensionless,From%3A%20Environmental%20Research%2C%202018) and band 6 Lidar height data more information about which Lidar used  [Here](https://www.ahn.nl)
+Were band 3 is the color blue, band 5 is NDVI more about what NDVI is [Here](https://www.sciencedirect.com/topics/earth-and-planetary-sciences/normalized-difference-vegetation-index#:~:text=The%20NDVI%20is%20a%20dimensionless,From%3A%20Environmental%20Research%2C%202018) and band 6 Lidar height data more information about which Lidar used [Here](https://www.ahn.nl)
 
 These values are already scaled more about this in the next section.
 
 ### Value scaler
+
 This model first calculates contrast for every different input values using scaler values between 0 en 1. This has to be done for each satellite image and for each input/band.
 We use sklearn to make these min max scalers which have to be stored in a .save file which in turn is stored in the scalers folder.
 
@@ -183,7 +165,7 @@ For more about how min max scalers, read the sklearn page [Here](https://scikit-
 ### Input filtering
 
 For the input we discovered that the atmosphere had a collinearity effect on the three red, green and blue values. As such we only pick the blue band in order to reduce the relative color weight in the prediction compared to NDVI and height data.
-A other advantage of using the color blue is that it’s the best color to  detect sand with. Detecting sand is particularly interesting for ecologists. 
+A other advantage of using the color blue is that it’s the best color to detect sand with. Detecting sand is particularly interesting for ecologists.
 
 The following illustration exemplifies the eventual and final input we have for the contrast model:
 
@@ -199,8 +181,8 @@ For a particular pixel or kernel, in which blue, NDVI and height is used and sca
 
 This can easily be interpreted as if for a given certain pixel or kernel the scaled blue color is between 1 and 0.7 this would mean that for this certain pixel/kernel sand for the input value blue. The same goes for the other input values NDVI and Height. The combinations of different input values gives the final predicted class.
 
-
 ### Example code
+
 Below here we will give a code example of how to use this contrast model and added comments.
 
 ```python
@@ -210,10 +192,10 @@ import nso_ds_classes.nso_ds_models as nso_ds_models
 import glob
 from nso_ds_classes.nso_ds_models import cluster_scaler_BNDVIH_model
 from nso_ds_classes.nso_ds_normalize_scaler import scaler_class_BNDVIH
-import nso_ds_classes.nso_ds_cluster as nso_ds_cluster 
+import nso_ds_classes.nso_ds_cluster as nso_ds_cluster
 from os.path import exists
 
-""" 
+"""
 This is now the default model.
 
 """
@@ -230,15 +212,15 @@ if __name__ == '__main__':
         # Setup a tif kernel iterator.
         path_to_tif_file = file.replace("\\","/")
         print(path_to_tif_file)
-        out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")      
+        out_path = "E:/output/Coepelduynen_segmentations/"+path_to_tif_file.split("/")[-1].replace(".tif","_normalised_cluster_model.shp")
         tif_kernel_generator = nso_tif_kernel_iterator.nso_tif_kernel_iterator_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
 
-        
+
         # Path to the predetermined classes.
         cluster_centers_file = "./cluster_centers/normalized_5_BHNDVI_cluster_centers.csv"
 
-               
-        # Load the class cluster centers into a euclidean distance model.   
+
+        # Load the class cluster centers into a euclidean distance model.
         a_cluster_annotations_stats_model = cluster_scaler_BNDVIH_model(cluster_centers_file)
 
         # This model needs scalers in order to be useful for a specific .tif file, check if they already exist. Make them if they don't already exist.
@@ -252,7 +234,7 @@ if __name__ == '__main__':
                                                                             scaler_file_band5 = "./scalers/"+path_to_tif_file.split("/")[-1]+"_band5.save", \
                                                                             scaler_file_band6 = "./scalers/ahn4.save")
 
-        # The main iterator loop, if no multiprocessing variable is giving, it automatically will do multiprocessing and thus has to be run from a kernel. 
+        # The main iterator loop, if no multiprocessing variable is giving, it automatically will do multiprocessing and thus has to be run from a kernel.
         tif_kernel_generator.predict_all_output(a_cluster_annotations_stats_model, out_path , parts = 3,  normalize_scaler= a_normalize_scaler_class_BNDVIH )
 
 ```
@@ -276,7 +258,7 @@ Which is used in the following way:
     out_path = "<PATH_TO_OUTPUT_FILE"
     tif_kernel_generator = nso_tif_kernel.nso_tif_kernel_generator(path_to_tif_file, x_kernel_width , y_kernel_height)
 
-    # Set a model on a .tif generator. 
+    # Set a model on a .tif generator.
     model = nso_ds_models.deep_learning_model(tif_kernel_generator)
     # Get annotations for a particular .tif file.
     model.get_annotations(path_to_tif_file.split("/")[-1])
@@ -285,22 +267,17 @@ Which is used in the following way:
     # Train the specificed model on the annotations.
     model.train_model_on_sat_anno(path_to_tif_file.split("/")[-1])
 
-    # Use the model to predict all the pixels in a .tif in a multiprocessing way.    
+    # Use the model to predict all the pixels in a .tif in a multiprocessing way.
     tif_kernel_generator.predict_all_output(model, out_path , parts = 3)
 
 ```
 
 # Author
+
 Michael de Winter
 
 Jeroen Esseveld.
+
 # Contact
 
 Contact us at vdwh@pzh.nl
-
-
-
-
-
-
-
