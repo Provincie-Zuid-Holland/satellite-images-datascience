@@ -1,0 +1,1 @@
+This folder is used for models which are trained on annotations.
