@@ -20,5 +20,10 @@ setup(
     python_requires=">=3.6",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    install_requires=["earthpy==0.9.4", "geopandas==0.11.0"],
+    install_requires=[
+        "earthpy==0.9.4",
+        "geopandas==0.11.0",
+        "scikit-learn==1.0.2",
+        "rasterio==1.3.9",
+    ],
 )

@@ -25,7 +25,7 @@ When working with 64x Windows and Anaconda for your python environment managemen
 conda create -n satellite-images-nso-datascience python=3.9 -y
 conda activate satellite-images-nso-datascience
 pip install -r requirements.txt
-pip install .
+pip install -e .
 ```
 
 # Model input.

@@ -1,13 +1,10 @@
-import os
-
 import pandas as pd
 import rasterio
 
 
 class FlattenedRGBImageLoader:
-    def __init__(self, filename: str, folder_path: str):
-        self.filename = filename
-        self.filepath = os.path.join(folder_path, self.filename)
+    def __init__(self, filepath: str):
+        self.filepath = filepath
 
     def get_rgb_df(self):
         """

@@ -119,4 +119,5 @@ selected_features = [
     Feature(feature_type=FeatureType.COLOUR_QUANTILE, colour="red", quantile=0.99),
     Feature(feature_type=FeatureType.NUMBER_BRIGHT_PIXELS, minimal_brightness=500),
     Feature(feature_type=FeatureType.NUMBER_BRIGHT_PIXELS, minimal_brightness=700),
+    Feature(feature_type=FeatureType.NUMBER_OF_PIXELS),
 ]
