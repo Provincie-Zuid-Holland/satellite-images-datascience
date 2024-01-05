@@ -25,7 +25,7 @@ When working with 64x Windows and Anaconda for your python environment managemen
 conda create -n satellite-images-nso-datascience python=3.9 -y
 conda activate satellite-images-nso-datascience
 pip install -r requirements.txt
-pip install .
+pip install -e .
 ```
 
 # Model input.
@@ -272,11 +272,19 @@ Which is used in the following way:
 
 ```
 
+# Cloud Detection Models
+
+The basis of these models are the cropped satellite images available on the `pzh-blob-satelliet` blob storage in folder `satellite-images-nso\SV_50cm`. The files used are listed in `cloud_recognition/satellite-images-clouds.csv`. To recreate a cloud detection model or create a new one, those files should be downloaded and placed in a folder.
+
+After that one can follow the `cloud_recognition\cloud_recognition_train_model.ipynb` notebook to retrain a model or train a new one. The `cloud_recognition\cloud_recognition_apply_model.ipynb` notebook shows how to apply an existing model to a tif file.
+
 # Author
 
 Michael de Winter
 
 Jeroen Esseveld.
+
+Pieter Kouyzer
 
 # Contact
 
