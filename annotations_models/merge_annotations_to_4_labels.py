@@ -32,15 +32,18 @@ filename = "annotaties_VoornesDuin_2024-01-05.geojson"
 # Convert to correct filenames
 original_filepath = os.path.join(folder_path, filename)
 file_base, file_extension = filename.split(".")
-converted_filename = f"{file_base}_5_labels.{file_extension}"
+converted_filename = f"{file_base}_4_labels.{file_extension}"
 converted_filepath = os.path.join(folder_path, converted_filename)
 
 
 annotations_gdf = gpd.read_file(original_filepath)
 
+annotations_gdf["name"] = annotations_gdf["name"] + "_asphalt_crop"
+
 # Display original Labels in gdf
 print(annotations_gdf["Label"].unique())
 annotations_gdf["Label"] = annotations_gdf["Label"].apply(convert_label)
+annotations_gdf = annotations_gdf[annotations_gdf["Label"] != "Asfalt"]
 
 # Display converted Labels in gdf
 print(annotations_gdf["Label"].unique())

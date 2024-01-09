@@ -278,6 +278,15 @@ The basis of these models are the cropped satellite images available on the `pzh
 
 After that one can follow the `cloud_recognition\cloud_recognition_train_model.ipynb` notebook to retrain a model or train a new one. The `cloud_recognition\cloud_recognition_apply_model.ipynb` notebook shows how to apply an existing model to a tif file.
 
+# Workflow training a new model
+
+1. Extract new images through extractor
+2. Set up annotations on images through QGis into a geojson
+3. Run scaler
+4. Transform annotations geojsons into pixel annotations in csv
+5. Split train/test
+6. Train RandomForestClassifier model
+
 # Author
 
 Michael de Winter
