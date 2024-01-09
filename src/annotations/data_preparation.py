@@ -2,51 +2,77 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 from rasterio.mask import mask
+from shapely.geometry.multipolygon import MultiPolygon
 
 from .utils import get_season_for_month
 
 
+def get_flattened_pixels_for_polygon(
+    dataset: rasterio.DatasetReader, polygon: MultiPolygon
+) -> pd.DataFrame:
+    """
+    Cuts polygon out of dataset and flattens the (6) bands of dataset into a single pandas DataFrame
+    """
+    cropped_to_polygon, _ = mask(dataset, polygon, crop=True)
+
+    df = pd.DataFrame(
+        {
+            "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
+            "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
+            "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
+            "i": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
+            "ndvi": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
+            "height": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
+        }
+    )
+    return df
+
+
+def fill_pixel_columns(df: pd.DataFrame, label: str, image_name: str) -> pd.DataFrame:
+    """
+    Adds columns for the pixel dataframe.
+
+    @param df: pixel dataframe
+    @label: label given to the polygon these pixels belong to
+    @image_name: filename of the tif file these pixels belong to
+    @return pandas DataFrame, as df, but with additional columns
+    """
+    df["label"] = label
+    df["image"] = image_name
+    df["date"] = image_name[0:15]
+    df["season"] = get_season_for_month(image_name[4:6])
+    return df
+
+
 def extract_dataframe_pixels_values_from_tif_and_polygons(
-    path_to_tif: str, path_to_polygons: str
-):
-    # TODO: Move reading of files outside of this function
-    # TODO: Move row wise function into a separate function
-    # TODO: make r==0 filter more explicit
-    geo_file = gpd.read_file(path_to_polygons)
-    # TODO: Remove filter below
-    geo_file = geo_file[:10]
-    src = rasterio.open(path_to_tif)
+    tif_dataset: rasterio.DatasetReader,
+    polygon_gdf: gpd.GeoDataFrame,
+    name_tif_file: str,
+) -> pd.DataFrame:
+    """
+    Filters polygons in polygon_gdf out of tif_dataset (for those polygons where row["name"] matches name_tif_file).
+    Flattens the pixels in those polygons and adds several meta data columns
+
+    @param tif_dataset: rasterio DatasetReader containing satellite imagery
+    @param polygon_gdf: GeoDataFrame containing polygons in the tif_dataset area, labelled by the column 'Label'
+    @name_tif_file: name of the tif_dataset object, so it can be matched with the correct row from polygon_df (polygon_gdf["name"])
+    @return pandas DataFrame with a pixel per row
+    """
+    print(name_tif_file)
+    polygon_gdf = polygon_gdf
+
     dfs = []
-    name_tif = path_to_tif.split("/")[-1].split(".")[0]
-    print(name_tif)
-
-    if geo_file.crs != "epsg:28992":
-        geo_file = geo_file.to_crs(epsg=28992)
-
-    for _, row in geo_file.iterrows():
-        if row["name"] == name_tif:
-            out_image, _ = mask(src, row["geometry"], crop=True)
-
-            df_row = pd.DataFrame(
-                {
-                    "r": pd.Series(out_image[0].flatten(), dtype=float),
-                    "g": pd.Series(out_image[1].flatten(), dtype=float),
-                    "b": pd.Series(out_image[2].flatten(), dtype=float),
-                    "i": pd.Series(out_image[3].flatten(), dtype=float),
-                    "ndvi": pd.Series(out_image[4].flatten(), dtype=float),
-                    "height": pd.Series(out_image[5].flatten(), dtype=float),
-                }
+    for _, row in polygon_gdf.iterrows():
+        if row["name"] == name_tif_file:
+            df_row = get_flattened_pixels_for_polygon(
+                dataset=tif_dataset, polygon=row["geometry"]
             )
-            df_row["label"] = row["Label"]
-            df_row["image"] = path_to_tif.split("/")[-1]
-            df_row["date"] = path_to_tif.split("/")[-1][0:15]
-            df_row["season"] = get_season_for_month(path_to_tif.split("/")[-1][4:6])
+            df_row = fill_pixel_columns(df_row, row["Label"], image_name=name_tif_file)
             dfs += [df_row]
-    src.close()
     if len(dfs) > 0:
         df = pd.concat(dfs)
-        df = df[df["r"] != 0].reset_index(drop=True)
-        print(len(df))
+        mask_non_empty_pixels = df["r"] != 0
+        df = df[mask_non_empty_pixels].reset_index(drop=True)
     else:
         df = pd.DataFrame()
 
