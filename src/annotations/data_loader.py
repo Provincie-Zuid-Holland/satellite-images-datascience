@@ -9,12 +9,14 @@ import pandas as pd
 def load_annotations_polygons(
     annotations_folder: str,
     annotations_polygon_filename_regex: str,
-    location: str,
-    images_folder: str,
+    images_folder: str = None,
+    image_regex: str = None,
 ) -> gpd.GeoDataFrame:
     """
     @param annotations_folder: folder conaintaining annotations file(s)
     @param annotations_polygon_filename_regex: filename of annotations geojson file
+    @images_folder: folder containing tif files (only necessary if polygon files do not contain name column)
+    @image_regex: regex to find correct if files in images_folder (only necessary if polygon files do not contain name column)
 
     @return GeopandasDataFrame containing the polygons of all annotations for the given location
     """
@@ -29,7 +31,7 @@ def load_annotations_polygons(
 
         if not "name" in df.columns:
             image_date = re.findall("[0-9]{8}", filepath)
-            image_file = glob.glob(f"{images_folder}/*{image_date}*{location}*tif")[0]
+            image_file = glob.glob(f"{images_folder}/*{image_date}{image_regex}")[0]
             image_filename_without_extension = os.path.split(image_file)[-1].split(
                 ".tif"
             )[0]
