@@ -26,13 +26,13 @@ def convert_label(label: str) -> str:
 
 # Set variables
 folder_path = "../../Data/remote-sensing/annotations"
-filename = "annotaties_VoornesDuin_2024-01-05.geojson"
+filename = "annotaties_VoornesDuin_gecorrigeerd_100124.geojson"
 
 
 # Convert to correct filenames
 original_filepath = os.path.join(folder_path, filename)
 file_base, file_extension = filename.split(".")
-converted_filename = f"{file_base}_4_labels.{file_extension}"
+converted_filename = f"{file_base}_3_labels.{file_extension}"
 converted_filepath = os.path.join(folder_path, converted_filename)
 
 
@@ -43,7 +43,10 @@ annotations_gdf["name"] = annotations_gdf["name"] + "_asphalt_crop"
 # Display original Labels in gdf
 print(annotations_gdf["Label"].unique())
 annotations_gdf["Label"] = annotations_gdf["Label"].apply(convert_label)
-annotations_gdf = annotations_gdf[annotations_gdf["Label"] != "Asfalt"]
+
+no_asfalt_mask = annotations_gdf["Label"] != "Asfalt"
+no_shadow_mask = annotations_gdf["Label"] != "Schaduw"
+annotations_gdf = annotations_gdf[no_asfalt_mask & no_shadow_mask]
 
 # Display converted Labels in gdf
 print(annotations_gdf["Label"].unique())
