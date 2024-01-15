@@ -1,8 +1,9 @@
+from copy import deepcopy
 from random import Random
 
 import imblearn
 import pandas as pd
-from sklearn.base import ClassifierMixin, clone
+from sklearn.base import ClassifierMixin
 
 from .metric_calculation import get_metrics
 
@@ -116,7 +117,7 @@ def cross_validation_balance_on_date(
                 "fold": fold + 1,
                 "train": train,
                 "test": test,
-                "model": clone(model),
+                "model": deepcopy(model),
                 "hold_out_dates": folds[fold]["test"],
             }
         )
