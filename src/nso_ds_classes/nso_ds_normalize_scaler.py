@@ -15,157 +15,43 @@ import tqdm
 from sklearn.preprocessing import MinMaxScaler
 
 
-class scaler_class_BNDVIH:
+class scaler_class_all:
     """
-    This class is used to scale blue, ndvi and height columns of a pandas dataframe from a .tif file.
-    Which should be band 3, band 5 and band 6 respectively.
+    This class is used to scale columns of a pandas pixel dataframe made from a .tif file.
+    Which bands to scale is set upon initialisation.
 
     Scalers should have been made indepently!
 
     """
 
-    def __init__(
-        self, scaler_file_band3="", scaler_file_band5="", scaler_file_band6=""
-    ):
+    def __init__(self, scaler_band_filepaths: list):
         """
         Init of this class.
 
-        @param scaler_file_band3: Path to a file which contains the scaler for band 3.
-        @param scaler_file_band5: Path to a file which contains the scaler for band 5.
-        @param scaler_file_band6: Path to a file which contains the scaler for band 6.
-
+        @param scaler_band_filepaths: List of paths to the files which contains the scaler for the bands of the provided data
         """
-        self.scaler_band3 = joblib.load(scaler_file_band3)
-        self.scaler_band5 = joblib.load(scaler_file_band5)
-        self.scaler_band6 = joblib.load(scaler_file_band6)
+        self.scalers = [
+            joblib.load(scaler_filepath) for scaler_filepath in scaler_band_filepaths
+        ]
 
-    def transform(self, pixel_df, col_names=["band3", "band5", "band6"]):
+    def transform(self, pixel_df: pd.DataFrame, col_names: list) -> pd.DataFrame:
         """
-        Transforms the blue, ndvi and height columns of a pandas dataframe.
+        Transforms the  columns of a pandas pixel dataframe, according to self.scalers.
 
-        @param pixel_df: dataframe in which the blue, ndvi and height column have to be scaled.
-        @return: dataframe which scaled blue, ndvi and height bands.
+        @param pixel_df: dataframe in which the columns have to be scaled.
+        @col_names: List of columns that must be scaled. Note that this should have the same length as self.scalers and the column names should be in the corresponding order to self.scalers
+        @return: dataframe with scaled columns of the same name
 
         """
         pixel_df_copy = pixel_df.copy()
 
-        pixel_df_copy[col_names[0]] = self.scaler_band3.transform(
-            pixel_df_copy[col_names[0]].values.reshape(-1, 1)
-        )
-        pixel_df_copy[col_names[1]] = self.scaler_band5.transform(
-            pixel_df_copy[col_names[1]].values.reshape(-1, 1)
-        )
-        pixel_df_copy[col_names[2]] = self.scaler_band6.transform(
-            pixel_df_copy[col_names[2]].values.reshape(-1, 1)
-        )
+        for i in range(0, len(self.scalers)):
+            col = col_names[i]
+            pixel_df_copy[col] = self.scalers[i].transform(
+                pixel_df_copy[col].values.reshape(-1, 1)
+            )
+
         return pixel_df_copy
-
-
-class scaler_class_all:
-    """
-    This class is used to scale blue, ndvi and height columns of a pandas dataframe from a .tif file.
-    Which should be band 3, band 5 and band 6 respectively.
-
-    Scalers should have been made indepently!
-
-    """
-
-    def __init__(
-        self,
-        scaler_file_band1="",
-        scaler_file_band2="",
-        scaler_file_band3="",
-        scaler_file_band4="",
-        scaler_file_band5="",
-        scaler_file_band6="",
-    ):
-        """
-        Init of this class.
-
-        @param scaler_file_band3: Path to a file which contains the scaler for band 3.
-        @param scaler_file_band5: Path to a file which contains the scaler for band 5.
-        @param scaler_file_band6: Path to a file which contains the scaler for band 6.
-
-        """
-
-        self.scaler_band1 = joblib.load(scaler_file_band1)
-        self.scaler_band2 = joblib.load(scaler_file_band2)
-        self.scaler_band3 = joblib.load(scaler_file_band3)
-        self.scaler_band4 = joblib.load(scaler_file_band4)
-        self.scaler_band5 = joblib.load(scaler_file_band5)
-        self.scaler_band6 = joblib.load(scaler_file_band6)
-
-    def transform(
-        self, pixel_df, col_names=["band1", "band2", "band3", "band4", "band5", "band6"]
-    ):
-        """
-        Transforms the blue, ndvi and height columns of a pandas dataframe.
-
-        @param pixel_df: dataframe in which the blue, ndvi and height column have to be scaled.
-        @return: dataframe which scaled blue, ndvi and height bands.
-
-        """
-        new_pixel_df = pixel_df.copy()
-        new_pixel_df[col_names[0]] = self.scaler_band1.transform(
-            new_pixel_df[col_names[0]].values.reshape(-1, 1)
-        )
-        new_pixel_df[col_names[1]] = self.scaler_band2.transform(
-            new_pixel_df[col_names[1]].values.reshape(-1, 1)
-        )
-        new_pixel_df[col_names[2]] = self.scaler_band3.transform(
-            new_pixel_df[col_names[2]].values.reshape(-1, 1)
-        )
-        new_pixel_df[col_names[3]] = self.scaler_band4.transform(
-            new_pixel_df[col_names[3]].values.reshape(-1, 1)
-        )
-        new_pixel_df[col_names[4]] = self.scaler_band5.transform(
-            new_pixel_df[col_names[4]].values.reshape(-1, 1)
-        )
-        new_pixel_df[col_names[5]] = self.scaler_band6.transform(
-            new_pixel_df[col_names[5]].values.reshape(-1, 1)
-        )
-
-        return new_pixel_df
-
-
-class scaler_class_BH:
-    """
-    This class is used to scale blue, ndvi and height columns of a pandas dataframe from a .tif file.
-    Which should be band 3, band 5 and band 6 respectively.
-
-    Scalers should have been made indepently!
-
-    """
-
-    def __init__(self, scaler_file_band3="", scaler_file_band6=""):
-        """
-        Init of this class.
-
-        @param scaler_file_band3: Path to a file which contains the scaler for band 3.
-        @param scaler_file_band5: Path to a file which contains the scaler for band 5.
-        @param scaler_file_band6: Path to a file which contains the scaler for band 6.
-
-        """
-
-        self.scaler_band3 = joblib.load(scaler_file_band3)
-        self.scaler_band6 = joblib.load(scaler_file_band6)
-
-    def transform(self, pixel_df):
-        """
-        Transforms the blue, ndvi and height columns of a pandas dataframe.
-
-        @param pixel_df: dataframe in which the blue, ndvi and height column have to be scaled.
-        @return: dataframe which scaled blue, ndvi and height bands.
-
-        """
-
-        pixel_df["band3"] = self.scaler_band3.transform(
-            pixel_df["band3"].values.reshape(-1, 1)
-        )
-        pixel_df["band6"] = self.scaler_band6.transform(
-            pixel_df["band6"].values.reshape(-1, 1)
-        )
-        return pixel_df
 
 
 class scaler_normalizer_retriever:
