@@ -278,14 +278,17 @@ The basis of these models are the cropped satellite images available on the `pzh
 
 After that one can follow the `cloud_recognition\cloud_recognition_train_model.ipynb` notebook to retrain a model or train a new one. The `cloud_recognition\cloud_recognition_apply_model.ipynb` notebook shows how to apply an existing model to a tif file.
 
-# Workflow training a new model
+# How to train a new model
 
-1. Extract new images through extractor
-2. Set up annotations on images through QGis into a geojson
-3. Run scaler
-4. Transform annotations geojsons into pixel annotations in csv
-5. Split train/test
-6. Train RandomForestClassifier model
+1. Retrieve images using the [satellite_images_nso_extractor](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_extractor) repository.
+2. Create the scalers for these images using the 'scalers_make_run/run_make_scalers_normalize.ipynb' notebook for each of the images.
+3. Use QGis to set up annotations for each of the images. Make polygons for each area of a specific label and add the following columns, before exporting as a geojson:
+   - 'name': this is the name of the tif file (extension excluded)
+   - 'Label': this is the label of the selected polygon.
+4. Next run the 'data/annotations/transform_polygon_annotations_to_pixels.ipynb' with the appropriate variables.
+5. Finally run 'annotations_models/train_random_forest_classifier_model.ipynb' notebook with the appropriate variables. This produces:
+   - A pickle file containing the cross-validation models & metrics
+   - A pickle file containing the model trained on all annotated data
 
 # Author
 

@@ -2,18 +2,18 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 from rasterio.mask import mask
-from shapely.geometry.multipolygon import MultiPolygon
+from shapely.geometry.polygon import Polygon
 
 from .utils import get_season_for_month
 
 
 def get_flattened_pixels_for_polygon(
-    dataset: rasterio.DatasetReader, polygon: MultiPolygon
+    dataset: rasterio.DatasetReader, polygon: Polygon
 ) -> pd.DataFrame:
     """
     Cuts polygon out of dataset and flattens the (6) bands of dataset into a single pandas DataFrame
     """
-    cropped_to_polygon, _ = mask(dataset, polygon, crop=True)
+    cropped_to_polygon, _ = mask(dataset, [polygon], crop=True)
 
     df = pd.DataFrame(
         {
@@ -58,7 +58,6 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     @name_tif_file: name of the tif_dataset object, so it can be matched with the correct row from polygon_df (polygon_gdf["name"])
     @return pandas DataFrame with a pixel per row
     """
-    print(name_tif_file)
     polygon_gdf = polygon_gdf
 
     dfs = []
