@@ -4,18 +4,12 @@ from random import Random
 import imblearn
 import pandas as pd
 from sklearn.base import ClassifierMixin
-<<<<<<< HEAD
 import mlflow
 
 from .metric_calculation import get_metrics
 
 mlflow.sklearn.autolog()
 
-=======
-
-from .metric_calculation import get_metrics
-
->>>>>>> main
 
 def create_folds(values: list, n_folds: int, seed: int) -> dict:
     """
@@ -71,13 +65,9 @@ def train_imbalanced_model(
     X_balanced, y_balanced = sampler.fit_resample(X_train, y_train)
 
     print("Fitting model")
-<<<<<<< HEAD
 
     with mlflow.start_run() as run:
         model.fit(X_balanced, y_balanced)
-=======
-    model.fit(X_balanced, y_balanced)
->>>>>>> main
 
 
 def cross_validation_balance_on_date(
