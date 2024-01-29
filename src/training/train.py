@@ -4,6 +4,7 @@ from random import Random
 import imblearn
 import pandas as pd
 from sklearn.base import ClassifierMixin
+from sklearn.preprocessing import StandardScaler
 
 from .metric_calculation import get_metrics
 
@@ -54,10 +55,10 @@ def train_imbalanced_model(
 
     size_smallest_class = y_train.value_counts().min()
     if size_smallest_class < sampling_type_boundary:
-        print("Oversampling to rebalancing dataset")
+        print("Oversampling to rebalance dataset")
         sampler = imblearn.over_sampling.SMOTE(random_state=random_state)
     else:
-        print("Undersampling to rebalancing dataset")
+        print("Undersampling to rebalance dataset")
         sampler = imblearn.under_sampling.RandomUnderSampler(random_state=random_state)
     X_balanced, y_balanced = sampler.fit_resample(X_train, y_train)
 
@@ -97,8 +98,12 @@ def cross_validation_balance_on_date(
         print("Picked hold out dates: ")
         print(folds[fold]["test"])
 
-        df_train = data[data["date"].isin(folds[fold]["train"])]
-        df_test = data[data["date"].isin(folds[fold]["test"])]
+        df_train = data[data["date"].isin(folds[fold]["train"])].copy()
+        df_test = data[data["date"].isin(folds[fold]["test"])].copy()
+
+        scaler = StandardScaler()
+        df_train[features] = scaler.fit_transform(df_train[features])
+        df_test[features] = scaler.transform(df_test[features])
 
         train_imbalanced_model(
             X_train=df_train[features],
@@ -112,12 +117,14 @@ def cross_validation_balance_on_date(
         train = get_metrics(y=df_train["label"], X=df_train[features], model=model)
         print("Calculating test metrics")
         test = get_metrics(y=df_test["label"], X=df_test[features], model=model)
+        print(test)
         results.append(
             {
                 "fold": fold + 1,
                 "train": train,
                 "test": test,
                 "model": deepcopy(model),
+                "scaler": deepcopy(scaler),
                 "hold_out_dates": folds[fold]["test"],
             }
         )
