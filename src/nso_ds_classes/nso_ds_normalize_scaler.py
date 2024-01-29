@@ -34,19 +34,18 @@ class scaler_class_all:
             joblib.load(scaler_filepath) for scaler_filepath in scaler_band_filepaths
         ]
 
-    def transform(self, pixel_df: pd.DataFrame, col_names: list) -> pd.DataFrame:
+    def transform(self, pixel_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Transforms the  columns of a pandas pixel dataframe, according to self.scalers.
+        Transforms the columns of a pandas pixel dataframe, according to the order of self.scalers. Make sure the columns are in the right order when presenting in pixel_df.
 
         @param pixel_df: dataframe in which the columns have to be scaled.
-        @col_names: List of columns that must be scaled. Note that this should have the same length as self.scalers and the column names should be in the corresponding order to self.scalers
         @return: dataframe with scaled columns of the same name
 
         """
         pixel_df_copy = pixel_df.copy()
 
         for i in range(0, len(self.scalers)):
-            col = col_names[i]
+            col = pixel_df.columns[i]
             pixel_df_copy[col] = self.scalers[i].transform(
                 pixel_df_copy[col].values.reshape(-1, 1)
             )
