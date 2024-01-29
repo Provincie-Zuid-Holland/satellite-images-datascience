@@ -39,7 +39,7 @@ def calculate_average_metrics(results: list) -> pd.DataFrame:
     @return Dataframe with labels as index and averaged precision, recall and f1-score as columns.
     """
     dfs = []
-    for i in range(1, len(results)):
+    for i in range(0, len(results)):
         df = pd.DataFrame.from_dict(results[i]["test"]).transpose()
         df["fold"] = results[i]["fold"]
         df[["precision", "recall", "f1-score"]] = df[
