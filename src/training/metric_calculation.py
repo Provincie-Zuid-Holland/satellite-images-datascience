@@ -1,9 +1,14 @@
 import pandas as pd
 from sklearn import metrics
-from sklearn.base import ClassifierMixin
+from sklearn.base import ClassifierMixin, TransformerMixin
 
 
-def get_metrics(X: pd.DataFrame, y: pd.Series, model: ClassifierMixin) -> dict:
+def get_metrics(
+    X: pd.DataFrame,
+    y: pd.Series,
+    model: ClassifierMixin,
+    scaler: TransformerMixin = None,
+) -> dict:
     """
     Get precision, recall, f1-score and support per class for X, y and model.
     (not using sklearn.metrics.classification_report, because it is considerably more computationally intensive)
@@ -11,9 +16,12 @@ def get_metrics(X: pd.DataFrame, y: pd.Series, model: ClassifierMixin) -> dict:
     @param X: dataframe of features as necessary for model
     @param y: true values for the labels of X dataframe
     @param model: Classifier that predicts y based on X
+    @param scaler: sklearn scaler that will be used if passed as argument
 
     @return dictionary with keys of class names, each value is a dictionary of 'precision', 'recall', 'f1-score' and 'support'
     """
+    if scaler is not None:
+        X = scaler.transform(X)
     confusion_matrix = metrics.confusion_matrix(y, model.predict(X))
     metrics_dict = {}
     for i in range(0, len(confusion_matrix)):

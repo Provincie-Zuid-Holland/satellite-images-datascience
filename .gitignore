@@ -20,3 +20,4 @@ scalers/*
 *.egg-info/
 build/*
 cloud_recognition/cache/
+*mlruns*
