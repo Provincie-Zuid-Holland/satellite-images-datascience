@@ -41,11 +41,10 @@ class scaler_class_all:
 
     def transform(self, pixel_df):
         """
-        Transforms the blue, ndvi and height columns of a pandas dataframe.
+        Transforms the columns of a pandas pixel dataframe, according to the order of self.scalers. Make sure the columns are in the right order when presenting in pixel_df.
 
-        @param pixel_df: dataframe in which the blue, ndvi and height column have to be scaled.
-        @return: dataframe which scaled blue, ndvi and height bands.
-
+        @param pixel_df: dataframe in which the columns have to be scaled.
+        @return: dataframe with scaled columns of the same name
         """
         xi = 0
         for column_name in self.columns_names:

@@ -11,20 +11,50 @@ def get_flattened_pixels_for_polygon(
     dataset: rasterio.DatasetReader, polygon: Polygon
 ) -> pd.DataFrame:
     """
-    Cuts polygon out of dataset and flattens the (6) bands of dataset into a single pandas DataFrame
+    Cuts polygon out of dataset and flattens the bands of dataset into a single pandas DataFrame
     """
     cropped_to_polygon, _ = mask(dataset, [polygon], crop=True)
 
-    df = pd.DataFrame(
-        {
-            "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
-            "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
-            "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
-            "i": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
-            "ndvi": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
-            "height": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
-        }
-    )
+    bands = dataset.count
+
+    if bands == 6:
+        df = pd.DataFrame(
+            {
+                "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
+                "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
+                "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
+                "i": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
+                "ndvi": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
+                "height": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
+            }
+        )
+    elif bands == 8:
+        df = pd.DataFrame(
+            {
+                "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
+                "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
+                "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
+                "n": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
+                "e": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
+                "d": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
+                "ndvi": pd.Series(cropped_to_polygon[6].flatten(), dtype=float),
+                "re_ndvi": pd.Series(cropped_to_polygon[7].flatten(), dtype=float),
+            }
+        )
+    elif bands == 9:
+        df = pd.DataFrame(
+            {
+                "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
+                "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
+                "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
+                "n": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
+                "e": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
+                "d": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
+                "ndvi": pd.Series(cropped_to_polygon[6].flatten(), dtype=float),
+                "re_ndvi": pd.Series(cropped_to_polygon[7].flatten(), dtype=float),
+                "height": pd.Series(cropped_to_polygon[8].flatten(), dtype=float),
+            }
+        )
     return df
 
 
@@ -70,7 +100,7 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
             dfs += [df_row]
     if len(dfs) > 0:
         df = pd.concat(dfs)
-        mask_non_empty_pixels = df["r"] != 0
+        mask_non_empty_pixels = (df["r"] != 0) | (df["g"] != 0) | (df["b"] != 0)
         df = df[mask_non_empty_pixels].reset_index(drop=True)
     else:
         df = pd.DataFrame()

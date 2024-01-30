@@ -2,6 +2,7 @@ from copy import deepcopy
 from random import Random
 
 import imblearn
+import mlflow
 import pandas as pd
 from sklearn.base import ClassifierMixin
 import mlflow
@@ -43,6 +44,7 @@ def train_imbalanced_model(
     model: ClassifierMixin,
     random_state: int,
     sampling_type_boundary: int,
+    scaler: TransformerMixin = None,
 ):
     """
     Rebalances X_train and y_train (oversampling or undersampling depending on the size of the smallest class) and then fits model. Does not return
@@ -52,20 +54,22 @@ def train_imbalanced_model(
     @param y_train: series of label to train model on
     @param model: initialised classifier model
     @param random_state: seed for rebalancing
-    @sampling_type_boundary: if size of smallest class < sampling_type_boundary we oversample, otherwise we undersample
+    @param sampling_type_boundary: if size of smallest class < sampling_type_boundary we oversample, otherwise we undersample
+    @param scaler: sklearn scaler that will be used if passed as argument
     """
+    if scaler is not None:
+        X_train = scaler.fit_transform(X_train)
 
     size_smallest_class = y_train.value_counts().min()
     if size_smallest_class < sampling_type_boundary:
-        print("Oversampling to rebalancing dataset")
+        print("Oversampling to rebalance dataset")
         sampler = imblearn.over_sampling.SMOTE(random_state=random_state)
     else:
-        print("Undersampling to rebalancing dataset")
+        print("Undersampling to rebalance dataset")
         sampler = imblearn.under_sampling.RandomUnderSampler(random_state=random_state)
     X_balanced, y_balanced = sampler.fit_resample(X_train, y_train)
 
     print("Fitting model")
-
     with mlflow.start_run() as run:
         model.fit(X_balanced, y_balanced)
 
@@ -77,6 +81,7 @@ def cross_validation_balance_on_date(
     features: list,
     random_state: int,
     sampling_type_boundary: int = 100000,
+    scaler: TransformerMixin = None,
 ) -> list:
     """
     This method does cross validation based on dates instead of sampling.
@@ -87,6 +92,7 @@ def cross_validation_balance_on_date(
     @param features: list of columns in data to use
     @param random_state: seed for cross_validation split and balancing imbalanced datasets
     @param sampling_type_boundary: if size of smallest class < sampling_type_boundary we oversample, otherwise we undersample
+    @param scaler: sklearn scaler that will be used if passed as argument
 
     @return list of dictionaries. Each dictionary has a key 'fold': integer corresponding to fold, 'train': train metrics, 'test': test metrics,
             'model': trained model and 'hold_out_dates': dates that were in test for this fold
@@ -102,8 +108,8 @@ def cross_validation_balance_on_date(
         print("Picked hold out dates: ")
         print(folds[fold]["test"])
 
-        df_train = data[data["date"].isin(folds[fold]["train"])]
-        df_test = data[data["date"].isin(folds[fold]["test"])]
+        df_train = data[data["date"].isin(folds[fold]["train"])].copy()
+        df_test = data[data["date"].isin(folds[fold]["test"])].copy()
 
         train_imbalanced_model(
             X_train=df_train[features],
@@ -111,18 +117,25 @@ def cross_validation_balance_on_date(
             model=model,
             random_state=random_state,
             sampling_type_boundary=sampling_type_boundary,
+            scaler=scaler,
         )
 
         print("Calculating train metrics")
-        train = get_metrics(y=df_train["label"], X=df_train[features], model=model)
+        train = get_metrics(
+            y=df_train["label"], X=df_train[features], model=model, scaler=scaler
+        )
         print("Calculating test metrics")
-        test = get_metrics(y=df_test["label"], X=df_test[features], model=model)
+        test = get_metrics(
+            y=df_test["label"], X=df_test[features], model=model, scaler=scaler
+        )
+        print(test)
         results.append(
             {
                 "fold": fold + 1,
                 "train": train,
                 "test": test,
                 "model": deepcopy(model),
+                "scaler": deepcopy(scaler),
                 "hold_out_dates": folds[fold]["test"],
             }
         )
