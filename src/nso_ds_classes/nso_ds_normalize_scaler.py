@@ -29,9 +29,7 @@ class scaler_class_all:
         @param scaler_file_array:
         """
 
-        self.scaler_bands = [
-            joblib.load(scaler_file_band) for scaler_file_band in scaler_file_array
-        ]
+        self.scaler_bands = scaler_file_array
         self.columns_names = column_names
 
     def transform(self, pixel_df):
