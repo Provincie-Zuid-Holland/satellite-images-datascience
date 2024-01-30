@@ -34,11 +34,6 @@ class scaler_class_all:
         ]
         self.columns_names = column_names
 
-        if len(self.scaler_bands) == 0:
-            raise "No Scaler files found"
-        if len(self.columns_names) == 0:
-            raise "Got no column names"
-
     def transform(self, pixel_df):
         """
         Transforms the columns of a pandas pixel dataframe, according to the order of self.scalers. Make sure the columns are in the right order when presenting in pixel_df.
