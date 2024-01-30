@@ -58,7 +58,9 @@ def get_flattened_pixels_for_polygon(
     return df
 
 
-def fill_pixel_columns(df: pd.DataFrame, label: str, image_name: str) -> pd.DataFrame:
+def fill_pixel_columns(
+    df: pd.DataFrame, label: str, image_name: str, name_annotations: str
+) -> pd.DataFrame:
     """
     Adds columns for the pixel dataframe.
 
@@ -71,6 +73,7 @@ def fill_pixel_columns(df: pd.DataFrame, label: str, image_name: str) -> pd.Data
     df["image"] = image_name
     df["date"] = image_name[0:15]
     df["season"] = get_season_for_month(image_name[4:6])
+    df["annotation_no"] = name_annotations
     return df
 
 
@@ -78,6 +81,7 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     tif_dataset: rasterio.DatasetReader,
     polygon_gdf: gpd.GeoDataFrame,
     name_tif_file: str,
+    name_annotations: str,
 ) -> pd.DataFrame:
     """
     Filters polygons in polygon_gdf out of tif_dataset (for those polygons where row["name"] matches name_tif_file).
@@ -88,16 +92,22 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     @name_tif_file: name of the tif_dataset object, so it can be matched with the correct row from polygon_df (polygon_gdf["name"])
     @return pandas DataFrame with a pixel per row
     """
-    polygon_gdf = polygon_gdf
 
     dfs = []
-    for _, row in polygon_gdf.iterrows():
-        if row["name"] == name_tif_file:
+    for aindex, row in polygon_gdf.iterrows():
+        if row["name"] == name_annotations:
             df_row = get_flattened_pixels_for_polygon(
                 dataset=tif_dataset, polygon=row["geometry"]
             )
-            df_row = fill_pixel_columns(df_row, row["Label"], image_name=name_tif_file)
+            df_row = fill_pixel_columns(
+                df_row,
+                row["Label"],
+                image_name=name_tif_file,
+                name_annotations=str(aindex) + "_" + name_annotations,
+            )
+
             dfs += [df_row]
+
     if len(dfs) > 0:
         df = pd.concat(dfs)
         mask_non_empty_pixels = (df["r"] != 0) | (df["g"] != 0) | (df["b"] != 0)
