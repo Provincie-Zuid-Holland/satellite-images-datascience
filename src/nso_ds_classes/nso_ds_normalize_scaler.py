@@ -10,25 +10,25 @@ import itertools
 from multiprocessing import Pool
 
 import joblib
+import pandas as pd
+import tqdm
+from sklearn.preprocessing import MinMaxScaler
 
 
 class scaler_class_all:
     """
-    This class is used to scale blue, ndvi and height columns of a pandas dataframe from a .tif file.
-    Which should be band 3, band 5 and band 6 respectively.
+    This class is used to scale columns of a pandas pixel dataframe made from a .tif file.
+    Which bands to scale is set upon initialisation.
 
     Scalers should have been made indepently!
 
     """
 
-    def __init__(self, scaler_file_array, column_names):
+    def __init__(self, scaler_file_array: list, column_names: list):
         """
-        Init of this class.
-        Note the order has to be the same.
-
-        @param scaler_file_array:
+        @param scaler_file_array: List of paths to the files which contains the scaler for the bands of the provided data
+        @param column_names: Column names for scalers in the same order as the scaler_file_array
         """
-
         self.scaler_bands = [
             joblib.load(scaler_file_band) for scaler_file_band in scaler_file_array
         ]
@@ -41,20 +41,20 @@ class scaler_class_all:
 
     def transform(self, pixel_df):
         """
-        Transforms the blue, ndvi and height columns of a pandas dataframe.
+        Transforms the columns of a pandas pixel dataframe, according to the order of self.scalers. Make sure the columns are in the right order when presenting in pixel_df.
 
-        @param pixel_df: dataframe in which the blue, ndvi and height column have to be scaled.
-        @return: dataframe which scaled blue, ndvi and height bands.
-
+        @param pixel_df: dataframe in which the columns have to be scaled.
+        @return: dataframe with scaled columns of the same name
         """
-        xi = 0
-        for column_name in self.columns_names:
-            pixel_df[column_name] = self.scaler_bands[xi].transform(
-                pixel_df[column_name].values.reshape(-1, 1)
-            )
-            xi = xi + 1
+        pixel_df_copy = pixel_df.copy()
 
-        return pixel_df
+        for i in range(0, len(self.scaler_bands)):
+            col = self.columns_names[i]
+            pixel_df_copy[col] = self.scaler_bands[i].transform(
+                pixel_df_copy[col].values.reshape(-1, 1)
+            )
+
+        return pixel_df_copy
 
 
 class scaler_normalizer_retriever:
