@@ -4,7 +4,8 @@ from random import Random
 import imblearn
 import mlflow
 import pandas as pd
-from sklearn.base import ClassifierMixin
+from sklearn.base import ClassifierMixin, TransformerMixin
+from sklearn.ensemble import RandomForestClassifier
 import mlflow
 
 from .metric_calculation import get_metrics
@@ -41,7 +42,7 @@ def create_folds(values: list, n_folds: int, seed: int) -> dict:
 def train_imbalanced_model(
     X_train: pd.DataFrame,
     y_train: pd.Series,
-    model: ClassifierMixin,
+    model: RandomForestClassifier,
     random_state: int,
     sampling_type_boundary: int,
     scaler: TransformerMixin = None,
@@ -76,7 +77,7 @@ def train_imbalanced_model(
 
 def cross_validation_balance_on_date(
     data: pd.DataFrame,
-    model: ClassifierMixin,
+    model: RandomForestClassifier,
     cv: int,
     features: list,
     random_state: int,
