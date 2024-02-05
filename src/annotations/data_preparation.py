@@ -16,45 +16,14 @@ def get_flattened_pixels_for_polygon(
     cropped_to_polygon, _ = mask(dataset, [polygon], crop=True)
 
     bands = dataset.count
+    column_names = dataset.descriptions
 
-    if bands == 6:
-        df = pd.DataFrame(
-            {
-                "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
-                "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
-                "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
-                "i": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
-                "ndvi": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
-                "height": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
-            }
-        )
-    elif bands == 8:
-        df = pd.DataFrame(
-            {
-                "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
-                "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
-                "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
-                "n": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
-                "e": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
-                "d": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
-                "ndvi": pd.Series(cropped_to_polygon[6].flatten(), dtype=float),
-                "re_ndvi": pd.Series(cropped_to_polygon[7].flatten(), dtype=float),
-            }
-        )
-    elif bands == 9:
-        df = pd.DataFrame(
-            {
-                "r": pd.Series(cropped_to_polygon[0].flatten(), dtype=float),
-                "g": pd.Series(cropped_to_polygon[1].flatten(), dtype=float),
-                "b": pd.Series(cropped_to_polygon[2].flatten(), dtype=float),
-                "n": pd.Series(cropped_to_polygon[3].flatten(), dtype=float),
-                "e": pd.Series(cropped_to_polygon[4].flatten(), dtype=float),
-                "d": pd.Series(cropped_to_polygon[5].flatten(), dtype=float),
-                "ndvi": pd.Series(cropped_to_polygon[6].flatten(), dtype=float),
-                "re_ndvi": pd.Series(cropped_to_polygon[7].flatten(), dtype=float),
-                "height": pd.Series(cropped_to_polygon[8].flatten(), dtype=float),
-            }
-        )
+    df = pd.DataFrame(
+        cropped_to_polygon.reshape(bands, -1).transpose(),
+        columns=column_names,
+        dtype=float,
+    )
+
     return df
 
 
