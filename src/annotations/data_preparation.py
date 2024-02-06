@@ -81,7 +81,7 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     tif_dataset: rasterio.DatasetReader,
     polygon_gdf: gpd.GeoDataFrame,
     name_tif_file: str,
-    name_annotations: str,
+    name_table: str,
 ) -> pd.DataFrame:
     """
     Filters polygons in polygon_gdf out of tif_dataset (for those polygons where row["name"] matches name_tif_file).
@@ -92,10 +92,13 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     @name_tif_file: name of the tif_dataset object, so it can be matched with the correct row from polygon_df (polygon_gdf["name"])
     @return pandas DataFrame with a pixel per row
     """
+    # Check if there is a table name
+    if not name_table:
+        name_table = name_tif_file
 
     dfs = []
     for aindex, row in polygon_gdf.iterrows():
-        if row["name"] == name_annotations:
+        if row["name"] == name_table:
             df_row = get_flattened_pixels_for_polygon(
                 dataset=tif_dataset, polygon=row["geometry"]
             )
@@ -103,7 +106,7 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
                 df_row,
                 row["Label"],
                 image_name=name_tif_file,
-                name_annotations=str(aindex) + "_" + name_annotations,
+                name_annotations=str(aindex) + "_" + name_table,
             )
 
             dfs += [df_row]
