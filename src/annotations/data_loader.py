@@ -5,6 +5,20 @@ import re
 import geopandas as gpd
 import pandas as pd
 
+import fiona
+
+
+def load_annotations_polygons_gpkg(path_to_gpkg: str) -> gpd.GeoDataFrame:
+    gdfs = []
+    for alayer in fiona.listlayers(path_to_gpkg):
+        gdf = gpd.read_file(path_to_gpkg, layer=alayer)
+        if gdf.crs != "epsg:28992":
+            gdf = gdf.to_crs(epsg=28992)
+        gdf["name"] = alayer
+
+        gdfs += [gdf]
+    return pd.concat(gdfs)
+
 
 def load_annotations_polygons(
     annotations_folder: str,
