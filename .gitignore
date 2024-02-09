@@ -21,3 +21,6 @@ scalers/*
 build/*
 cloud_recognition/cache/
 *mlruns*
+./dist/*
+dist/*
+data/annotations/annotations_pixel_dataframes/*
