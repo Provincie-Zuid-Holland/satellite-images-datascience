@@ -26,5 +26,7 @@ setup(
         "scikit-learn==1.4.0",
         "rasterio==1.3.9",
         "fiona==1.9.5",
+        "pyarrow==15.0.0",
+        "fastparquet==2024.2.0",
     ],
 )
