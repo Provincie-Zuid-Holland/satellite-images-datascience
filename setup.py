@@ -28,5 +28,7 @@ setup(
         "fiona==1.9.5",
         "pyarrow==15.0.0",
         "fastparquet==2024.2.0",
+        "imblearn==0.0",
+        "mlflow==2.10.2",
     ],
 )
