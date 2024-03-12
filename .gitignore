@@ -4,6 +4,7 @@ coordinates_rd_awd.csv
 ./scalers/*
 scalers/*
 saved_models/*
+!saved_models/readme.md
 ./saved_models/*
 ./models/*
 bfg-1.14.0.jar
