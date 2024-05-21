@@ -35,6 +35,7 @@ def load_annotations_polygons(
     @return GeopandasDataFrame containing the polygons of all annotations for the given location
     """
     dfs = []
+    
     for filepath in glob.glob(
         os.path.join(annotations_folder, annotations_polygon_filename_regex)
     ):
