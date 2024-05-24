@@ -25,3 +25,4 @@ cloud_recognition/cache/
 ./dist/*
 dist/*
 data/annotations/annotations_pixel_dataframes/*
+data/annotations/setting_blob.py

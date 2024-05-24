@@ -46,3 +46,11 @@ PNEO:
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes_Duin/annotations_pixel_dataframes/2023_PNEO/annotaties_VoornesDuin_gecorrigeerd_100124_3_labels.geojson
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes_Duin/annotations_pixel_dataframes/2023_PNEO/Voornes%20Duin%20PNEO_30CM%20Annotations_2024-01-29.geojson
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes_Duin/annotations_pixel_dataframes/2023_PNEO/Voornes_Duin_PNEO_2024-01-29_pixel_annotations.parquet
+
+
+### Schippersgat
+Superview:
+https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Schippersgat/Superview_waterplanten_annotations.parquet
+
+PNEO:
+https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Schippersgat/PNEO_waterplanten_annotations.parquet
