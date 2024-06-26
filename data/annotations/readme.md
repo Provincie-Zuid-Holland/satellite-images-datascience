@@ -54,3 +54,11 @@ https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Schi
 
 PNEO:
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Schippersgat/PNEO_waterplanten_annotations.parquet
+
+### Nieuwkoopse Plassen
+
+Superview:
+https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Nieuwkoopse_Plassen/Superview_waterplanten_annotations.parquet
+
+PNEO:
+https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Nieuwkoopse_Plassen/PNEO_waterplanten_annotations.parquet
