@@ -3,7 +3,7 @@ import pandas as pd
 import rasterio
 from rasterio.mask import mask
 from shapely.geometry.polygon import Polygon
-
+import numpy as np
 from .utils import get_season_for_month
 
 
@@ -13,16 +13,35 @@ def get_flattened_pixels_for_polygon(
     """
     Cuts polygon out of dataset and flattens the bands of dataset into a single pandas DataFrame
     """
-    cropped_to_polygon, _ = mask(dataset, [polygon], crop=True)
+    cropped_to_polygon, out_transform = mask(dataset, [polygon], crop=True)
 
-    bands = dataset.count
     column_names = dataset.descriptions
 
-    df = pd.DataFrame(
-        cropped_to_polygon.reshape(bands, -1).transpose(),
-        columns=column_names,
-        dtype=float,
+    z_shape = cropped_to_polygon.shape[0]
+    x_shape = cropped_to_polygon.shape[1]
+    y_shape = cropped_to_polygon.shape[2]
+
+    x_coordinates = [
+        [x for y in range(0, cropped_to_polygon.shape[2])]
+        for x in range(0, cropped_to_polygon.shape[1])
+    ]
+    y_coordinates = [
+        [y for y in range(0, cropped_to_polygon.shape[2])]
+        for x in range(0, cropped_to_polygon.shape[1])
+    ]
+
+    rd_x, rd_y = rasterio.transform.xy(out_transform, x_coordinates, y_coordinates)
+
+    cropped_to_polygon = np.append(cropped_to_polygon, rd_x).reshape(
+        [z_shape + 1, x_shape, y_shape]
     )
+    cropped_to_polygon = np.append(cropped_to_polygon, rd_y).reshape(
+        [z_shape + 2, x_shape, y_shape]
+    )
+
+    cropped_to_polygon = cropped_to_polygon.reshape(-1, x_shape * y_shape).transpose()
+
+    df = pd.DataFrame(cropped_to_polygon, columns=list(column_names) + ["rd_x", "rd_y"])
 
     return df
 
@@ -83,6 +102,8 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     if len(dfs) > 0:
         df = pd.concat(dfs)
         mask_non_empty_pixels = (df["r"] != 0) | (df["g"] != 0) | (df["b"] != 0)
+        if len(mask_non_empty_pixels) > 0:
+            print("Found some empty pixels!")
         df = df[mask_non_empty_pixels].reset_index(drop=True)
     else:
         df = pd.DataFrame()

@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="nso_ds_classes",  # Replace with your own username
+    name="satellite_images_nso_datascience",  # Replace with your own username
     version="1.0.0",
     author="Michael de Winter",
     author_email="m.r.dewinter88@live.nl",
@@ -22,7 +22,7 @@ setup(
     packages=find_packages(where="src"),
     install_requires=[
         "earthpy==0.9.4",
-        "geopandas==0.14.2",
+        "geopandas==1.0.1",
         "scikit-learn==1.4.0",
         "rasterio==1.3.9",
         "fiona==1.9.5",

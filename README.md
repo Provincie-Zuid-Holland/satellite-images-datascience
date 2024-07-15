@@ -1,24 +1,24 @@
 # Introduction
 
-This repository houses all the training data , models and code to make said models utilized in the PZH Natura 2000 remote sensing project. The aim of this project is to employ machine learning techniques on land satellite imagery to monitor the distribution of various nature types within protected areas over time, in alignment with diverse climate/nature policies. Therefore, the models herein predict the nature type for each pixel in a land satellite image, which could include Grass, Forest, Sand, etc., based on learned annotations.
 
-The annotated pixels are stored as pandas dataframes download links in the data/annotations folder and are publicly available for anyone to train their own model. In essence, we used pixel values from the land satellite images to annotate various nature types. Our objective is to predict the type of nature based on these pixel values.
+This repository houses all the training data, models, and code utilized in the PZH Natura 2000 remote sensing project on NSO satellites. The aim of this project is to employ machine learning techniques on land satellite imagery to monitor the distribution of various nature types within protected areas over time, in alignment with diverse climate and nature policies. Therefore, the models herein predict the nature type for each pixel in a land satellite image, which could include Grass, Forest, Sand, etc., based on learned annotations.
 
-The models themselves can be downloaded with the links found in the readme.md file in the saved_models folder.
+The annotated pixels are stored as pandas DataFrames, with download links in the data/annotations folder, and are publicly available for anyone to train their own models. Essentially, we used pixel values from the land satellite images to annotate various nature types. Our objective is to predict the type of nature based on these pixel values.
 
-For further information, please refer to the readme.md file in the data/annotation folder.
+The models themselves can be downloaded using the links found in the readme.md file in the saved_models folder.
+
+For further information, please refer to the readme.md file in the data/annotations folder.
+
+**Please note that we no longer support models other than the annotated random forest supervised learning model on annotated data. See the annotations_model directory for details.**
 
 This repository includes three types of pixel-based models: a custom unsupervised spectral contrast model, a Keras deep learning network, and a random forest model trained on annotations. However, after a series of experiments, we found the random forest model trained on annotations to be the most effective and efficient for our project.
 
-!Please note that we no longer support models other than the annotated random forest supervised learning model.!
+Given the computation-intensive nature of pixel-based prediction, due to the vast quantity of pixels, the performance of a model is a critical factor. For details on how we run inference on these models using satellite images, please visit this repository: [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator).
 
-Given the computation-intensive nature of pixel-based prediction, due to the vast quantity of pixels, the performance of a model is a critical factor. For details on how we run/inference these models on satellite images, please visit this repository: [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator) .
-
-Thus this repository is exclusively used for model training.
-
+Thus, this repository is exclusively used for model training.
 # Installation
 
-When working with 64x Windows and Anaconda for your python environment management execute the following terminal commands in order:
+When working with 64x Windows and Anaconda for your python environment management execute the following terminal commands in order, however when only using annotation models this is not used:
 
 ```sh
 conda create -n satellite-images-nso-datascience python=3.12 -y
