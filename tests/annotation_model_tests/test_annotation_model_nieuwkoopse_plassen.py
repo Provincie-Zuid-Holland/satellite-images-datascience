@@ -13,9 +13,12 @@ import sys
 model_path = "C:/repos/satellite-images-nso-datascience/saved_models/Superview_Nieuwkoopse_plassen_20190302_113613_to_20221012_104900_random_forest_classifier.sav"
 location = "Nieuwkoopse_plassen"
 satellite_constellation = "Superview"
+output_path_test = "E:/output/test/Nieuwkoopse_plassen/"
+output_path = "E:/output/test/Nieuwkoopse_plassen/"
 
 # Put in settings file
 test_tif_files_dir = "E:/output/test/Nieuwkoopse_plassen/*SV*.tif"
+final_artefact = pickle.load(open(model_path, "rb"))
 
 
 def raster_to_dataframe(a_tif_file):
@@ -77,9 +80,6 @@ elif location == "Nieuwkoopse_plassen" and satellite_constellation == "Superview
     selected_features = ["r", "g", "b", "i", "ndvi", "ndwi"]
 
 
-final_artefact = pickle.load(open(model_path, "rb"))
-
-
 def test_difficult_pixels():
 
     if location == "Nieuwkoops_plassen" and satellite_constellation == "Superview":
@@ -104,8 +104,8 @@ def test_predict_all_function():
 
         with contextlib.redirect_stdout(io.StringIO()):
             output_file_name_generator = OutputFileNameGenerator(
-                output_path="E:/output/test/Nieuwkoopse_plassen/",
-                output_file_name="E:/output/test/Nieuwkoopse_plassen/"
+                output_path=output_path_test,
+                output_file_name=output_path
                 + a_tif_file.split("/")[-1].replace(".tif", ".parquet"),
             )
 
@@ -126,7 +126,7 @@ def test_predict_all_function():
             nso_tif_kernel_iterator_generator.predict_all_output()
 
             falses = 0
-            for afile in glob.glob("E:/output/test/Nieuwkoopse_plassen/*SV*.parquet"):
+            for afile in glob.glob(output_path_test + "*SV*.parquet"):
                 afile = afile.replace("\\", "/")
                 print(afile)
 
@@ -142,10 +142,7 @@ def test_predict_all_function():
 
             print(
                 "False rating off: "
-                + str(
-                    falses
-                    / len(glob.glob("E:/output/test/Nieuwkoopse_plassen/*SV*.parquet"))
-                )
+                + str(falses / len(glob.glob(output_path_test + "*SV*.parquet")))
             )
 
             assert falses == 0
@@ -154,7 +151,7 @@ def test_predict_all_function():
 def test_directly_on_tif_files():
 
     falses = 0
-    for afile in glob.glob("E:/output/test/Nieuwkoopse_plassen/*SV*.tif"):
+    for afile in glob.glob(output_path_test + "*SV*.tif"):
         afile = afile.replace("\\", "/")
         print(afile)
 
@@ -190,6 +187,6 @@ def test_directly_on_tif_files():
 
     print(
         "False rating off: "
-        + str(falses / len(glob.glob("E:/output/test/Nieuwkoopse_plassen/*SV*.tif")))
+        + str(falses / len(glob.glob(output_path_test + "*SV*.tif")))
     )
     assert falses == 0
