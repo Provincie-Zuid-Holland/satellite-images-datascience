@@ -30,18 +30,23 @@ def get_flattened_pixels_for_polygon(
         for x in range(0, cropped_to_polygon.shape[1])
     ]
 
-    rd_x, rd_y = rasterio.transform.xy(out_transform, x_coordinates, y_coordinates)
+    x_coordinate, y_coordinate = rasterio.transform.xy(
+        out_transform, x_coordinates, y_coordinates
+    )
 
-    cropped_to_polygon = np.append(cropped_to_polygon, rd_x).reshape(
+    cropped_to_polygon = np.append(cropped_to_polygon, x_coordinate).reshape(
         [z_shape + 1, x_shape, y_shape]
     )
-    cropped_to_polygon = np.append(cropped_to_polygon, rd_y).reshape(
+    cropped_to_polygon = np.append(cropped_to_polygon, y_coordinate).reshape(
         [z_shape + 2, x_shape, y_shape]
     )
 
     cropped_to_polygon = cropped_to_polygon.reshape(-1, x_shape * y_shape).transpose()
 
-    df = pd.DataFrame(cropped_to_polygon, columns=list(column_names) + ["rd_x", "rd_y"])
+    df = pd.DataFrame(
+        cropped_to_polygon,
+        columns=list(column_names) + ["x_coordinate", "y_coordinates"],
+    )
 
     return df
 
@@ -68,8 +73,8 @@ def fill_pixel_columns(
 def extract_dataframe_pixels_values_from_tif_and_polygons(
     tif_dataset: rasterio.DatasetReader,
     polygon_gdf: gpd.GeoDataFrame,
-    name_tif_file: str,
-    name_table: str,
+    name_tif_file=False,
+    name_table=False,
 ) -> pd.DataFrame:
     """
     Filters polygons in polygon_gdf out of tif_dataset (for those polygons where row["name"] matches name_tif_file).
@@ -85,8 +90,24 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
         name_table = name_tif_file
 
     dfs = []
-    for aindex, row in polygon_gdf.iterrows():
-        if row["name"] == name_table:
+
+    if "name" in polygon_gdf.columns:
+        for aindex, row in polygon_gdf.iterrows():
+
+            if row["name"] == name_table:
+                df_row = get_flattened_pixels_for_polygon(
+                    dataset=tif_dataset, polygon=row["geometry"]
+                )
+                df_row = fill_pixel_columns(
+                    df_row,
+                    row["Label"],
+                    image_name=name_tif_file,
+                    name_annotations=str(aindex) + "_" + name_table,
+                )
+
+                dfs += [df_row]
+    else:
+        for aindex, row in polygon_gdf.iterrows():
             df_row = get_flattened_pixels_for_polygon(
                 dataset=tif_dataset, polygon=row["geometry"]
             )
@@ -101,7 +122,11 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
 
     if len(dfs) > 0:
         df = pd.concat(dfs)
-        mask_non_empty_pixels = (df["r"] != 0) | (df["g"] != 0) | (df["b"] != 0)
+        mask_non_empty_pixels = (
+            (df[df.columns[0]] != 0)
+            | (df[df.columns[1]] != 0)
+            | (df[df.columns[2]] != 0)
+        )
         if len(mask_non_empty_pixels) > 0:
             print("Found some empty pixels!")
         df = df[mask_non_empty_pixels].reset_index(drop=True)
