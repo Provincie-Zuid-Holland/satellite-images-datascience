@@ -2,6 +2,7 @@ from rasterio.mask import mask
 import rasterio
 import glob
 import geopandas as gpd
+import os
 
 """
 
@@ -42,7 +43,12 @@ def crop_raster_based_on_gdf(agdf, input_raster_path, output_raster_path):
 
 
 # Path to where the annotations are stored.
-annotation_folder_path = "C:/repos/satellite-images-nso-datascience/data/annotations/Nieuwkoopse_Plassen/*.geojson"
+annotation_folder_path = (
+    os.path.abspath("./data/annotations/Nieuwkoopse_Plassen/").replace("\\", "/")
+    + "*.geojson"
+)
+
+# THESE ARE LOCAL BECAUSE YOU HAVE TO DOWNLOAD THE FILES SOMEWHERE YOURSELF.
 # Path to where the .tif files are on which the annotations have been made
 tif_files_path = "E:/data/nieuwkoopse_plassen/"
 # Path to where the output will be stored.
