@@ -4,11 +4,9 @@ from random import Random
 import imblearn
 import mlflow
 import pandas as pd
-from sklearn.base import ClassifierMixin, TransformerMixin
-from sklearn.metrics import classification_report
+from sklearn.base import TransformerMixin
 from sklearn.ensemble import RandomForestClassifier
 import mlflow
-from sklearn.model_selection import train_test_split
 from .metric_calculation import get_metrics
 
 mlflow.sklearn.autolog()
