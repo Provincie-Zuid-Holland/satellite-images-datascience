@@ -67,6 +67,12 @@ class custom_model_metrics:
             self.selected_features = ["r", "g", "b", "i", "ndvi", "ndwi"]
 
     def metric_difficult_pixels(self):
+        """
+
+        Test the model performance on pixels which are edge cases and difficult to predict.
+
+        TODO: Added more of these difficult pixels.
+        """
 
         fault_check = []
 
@@ -75,7 +81,7 @@ class custom_model_metrics:
             self.location == "Nieuwkoopse_plassen"
             and self.satellite_constellation == "Superview"
         ):
-
+            # TODO: FIll with more difficult pixels.
             fault_check.append(
                 [
                     "Water",
@@ -101,9 +107,12 @@ class custom_model_metrics:
         return fault_check
 
     def metrics_on_small_tif_files(self):
+        """
+        Test the model on small random .tif files, one side for model performance on the other side for the connection with raw .tif files.
 
-        falses = 0
+        """
 
+        # Collect the small .tif files to make predictions on.
         if (
             self.satellite_constellation == "Superview"
             and self.location == "Nieuwkoopse_plassen"
@@ -132,6 +141,7 @@ class custom_model_metrics:
             df["date"] = afile.split("/")[-1][0:15]
             df["label"] = afile.split("_test")[0].split("_")[-1]
 
+            # Get the most common prediction file and base that as it's predicted value.
             predict_value = (
                 pd.Series(
                     self.model.predict(
@@ -155,15 +165,31 @@ class custom_model_metrics:
 
     def metrics_on_small_tif_file_iterator(self):
         """
-        TODO: Make a decision if this should stay here or go to the iterator repo, since it's almost the same
-        as the last one on with the iterator package.
-        """
-        # Predict small .tif files.
-        falses = -1
+        Test the model performance on custom .tif files but also to test if  the model performance well with the iterator.
 
-        for a_tif_file in glob.glob(
-            os.path.abspath("./tests/test_input/").replace("\\", "/") + "*SV*.tif"
+        """
+
+        # Collect the small .tif files to make predictions on.
+        if (
+            self.satellite_constellation == "Superview"
+            and self.location == "Nieuwkoopse_plassen"
         ):
+            collect_files = glob.glob(
+                os.path.abspath("./tests/test_input/").replace("\\", "/")
+                + "/Nieuwkoopse_plassen_raster_images/*SV*.tif"
+            )
+
+        elif (
+            self.satellite_constellation == "PNEO"
+            and self.location == "Nieuwkoopse_plassen"
+        ):
+            collect_files = glob.glob(
+                os.path.abspath("./tests/test_input/").replace("\\", "/")
+                + "/Nieuwkoopse_plassen_raster_images/*PNEO*.tif"
+            )
+
+        # Make a iterator to make predictions with.
+        for a_tif_file in collect_files:
             a_tif_file = a_tif_file.replace("\\", "/")
             print(a_tif_file)
 
@@ -179,43 +205,55 @@ class custom_model_metrics:
                         path_to_tif_file=a_tif_file,
                         model=self.model,
                         output_file_name_generator=output_file_name_generator,
-                        parts=2,
+                        parts=1,
                         normalize_scaler=self.scaler,
                         column_names=self.selected_features,
                         dissolve_parts=False,
                         square_output=False,
-                        skip_done_part=False,
+                        do_all_parts=True,
                     )
                 )
 
                 nso_tif_kernel_iterator_generator.predict_all_output()
 
-                if falses == -1:
-                    falses = 0
+        # Collect the .parquet files to see how the predictions are.
+        if (
+            self.satellite_constellation == "Superview"
+            and self.location == "Nieuwkoopse_plassen"
+        ):
+            collect_files = glob.glob(
+                os.path.abspath("./tests/test_output/").replace("\\", "/")
+                + "*SV*.parquet"
+            )
+        elif (
+            self.satellite_constellation == "PNEO"
+            and self.location == "Nieuwkoopse_plassen"
+        ):
+            collect_files = glob.glob(
+                os.path.abspath("./tests/test_output/").replace("\\", "/")
+                + "*PNEO*.parquet"
+            )
 
-                collect_files = glob.glob(
-                    os.path.abspath("./tests/test_output/") + "*SV*.parquet"
-                )
-                for afile in collect_files:
-                    afile = afile.replace("\\", "/")
-                    print(afile)
+        return_metrics = []
 
-                    print(pd.read_parquet(afile)["label"].value_counts())
+        for afile in collect_files:
+            afile = afile.replace("\\", "/")
 
-                    print(afile.split("_test")[0].split("_")[-1])
-                    if (
-                        pd.read_parquet(afile)["label"].value_counts().index[0]
-                        != afile.split("_test")[0].split("_")[-1]
-                    ):
-                        # TODO: Make the error ratings better.
-                        print("Wrong!!!!!!!")
-                        falses = falses + 1
-                        os.remove(afile)
+            # Get the most common prediction file and base that as it's predicted value.
+            predict_value = pd.read_parquet(afile)["label"].value_counts().index[0]
 
-        false_accuracy = falses / len(glob.glob(collect_files))
-        print("False rating off: " + str(falses / len(glob.glob(collect_files))))
+            return_metrics.append(
+                [
+                    afile,
+                    predict_value == afile.split("_test")[0].split("_")[-1],
+                    predict_value,
+                    afile.split("_test")[0].split("_")[-1],
+                ]
+            )
 
-        return false_accuracy
+            os.remove(afile)
+
+        return return_metrics
 
     def __raster_to_dataframe(self, a_tif_file) -> pd.DataFrame:
         """
