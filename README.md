@@ -1,19 +1,15 @@
 # Introduction
 
+This repository contains all the necessary resources—training data, models, and code—used in the PZH (Natura 2000) remote sensing project on NSO satellites. The goal of this project is to leverage machine learning techniques to analyze satellite imagery, enabling the monitoring of land distribution across various (nature) types within protected Natura 2000 areas over time. Our approach involves training models to classify individual pixels into specific (nature) classes based on their spectral characteristics.
 
-This repository houses all the training data, models, and code utilized in the PZH Natura 2000 remote sensing project on NSO satellites. The aim of this project is to employ machine learning techniques on land satellite imagery to monitor the distribution of various nature types within protected areas over time, in alignment with diverse climate and nature policies. Therefore, the models herein predict the nature type for each pixel in a land satellite image, which could include Grass, Forest, Sand, etc., based on learned annotations.
+Through our research, we have determined that supervised machine learning models yield the best results. However, these models require extensive training data, which necessitated the manual annotation of satellite image pixels.
 
-The annotated pixels are stored as pandas DataFrames, with download links in the data/annotations folder, and are publicly available for anyone to train their own models. Essentially, we used pixel values from the land satellite images to annotate various nature types. Our objective is to predict the type of nature based on these pixel values.
+The annotated pixels are organized in pandas DataFrames, which are available for download in the data/annotations folder. These annotations are publicly accessible, allowing others to use them for their own model training. Essentially, we've labeled pixel values in the satellite imagery to correspond with different land types.
 
-The models themselves can be downloaded using the links found in the readme.md file in the saved_models folder.
+The trained models can be downloaded via the links provided in the saved_models folder, as detailed in the readme.md file.
 
-For further information, please refer to the readme.md file in the data/annotations folder.
-
-**Please note that we no longer support models other than the annotated random forest supervised learning model on annotated data. See the annotations_model directory for details.**
-
-This repository includes three types of pixel-based models: a custom unsupervised spectral contrast model, a Keras deep learning network, and a random forest model trained on annotations. However, after a series of experiments, we found the random forest model trained on annotations to be the most effective and efficient for our project.
-
-Given the computation-intensive nature of pixel-based prediction, due to the vast quantity of pixels, the performance of a model is a critical factor. For details on how we run inference on these models using satellite images, please visit this repository: [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator).
+Due to the computational demands of pixel-based predictions—given the sheer volume of pixels involved—model performance is a critical consideration. For comprehensive details on how we conduct inference using these models on satellite images, please refer to the repository
+[Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator).
 
 Thus, this repository is exclusively used for model training.
 # Installation
@@ -39,10 +35,11 @@ And for the height data here: [Here](https://github.com/Provincie-Zuid-Holland/v
 
 ## Input normalization/scaling.
 
-Decisions can be made to normalized/scaled the RGBIH values between 0 and 1 or standard Distribution of mean 0 and variance 1.
-This is done because of the unique RGBIH values a satellite image can have due to atmospheric influence thus normalization could theoretically reduce this influence.
+Decisions can be made to normalized/scaled the spectral values between 0 and 1 or standard Distribution of mean 0 and variance 1.
+This is done because of the unique spectral values a satellite image can have due to atmospheric influence thus normalization could theoretically reduce this influence.
 
-In the notebook /scalers_make_run/run_make_scalers_normalize.ipynb normalize/scaling is done.
+This scaling is done as well as model training done in the notebook /models/annotations_models/train_random_forest_classifier_model.ipynb
+
 
 The resulting data from this can be found at:
 
@@ -52,12 +49,7 @@ https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/coep
 Voornes Duin:
 https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voornes_Duin/annotations_pixel_dataframes/VoornesDuin_polyg2pixel_scaled_new.pkl
 
-# Annotations Models.
-
-After experimentation with different unsupervised models, we came to the conclusion that annotated supervised models are the best and used models.
-In conclusion we first have to make annotations on satellite images and based on these annotations train a model.
-
-Look in the annotations_models/train_random_forest_classifier_model.ipynb notebook to our results on training this model.
+# Saved Models.
 
 See the saved_models folders for download links to these models.
 
