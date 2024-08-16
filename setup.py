@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="satellite_images_nso_datascience",  # Replace with your own username
-    version="1.0.0",
+    version="1.0.1",
     author="Michael de Winter",
     author_email="m.r.dewinter88@live.nl",
     description="Satellite object recognition models",
