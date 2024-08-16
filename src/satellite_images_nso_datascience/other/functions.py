@@ -4,12 +4,16 @@ import requests
 
 
 # function to upload the annotations to the cloud, for searching with other parties
-def upload_to_blob(apath, connection_string, directory_blob):
+def upload_to_blob(
+    apath: str,
+    directory_blob: str,
+    aconnection_string: str,
+):
 
     container_name = "satellite-images-nso"
     blob_name = directory_blob + os.path.basename(apath)
 
-    blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+    blob_service_client = BlobServiceClient.from_connection_string(aconnection_string)
     container_client = blob_service_client.get_container_client(container_name)
     blob_client = container_client.get_blob_client(blob_name)
 
