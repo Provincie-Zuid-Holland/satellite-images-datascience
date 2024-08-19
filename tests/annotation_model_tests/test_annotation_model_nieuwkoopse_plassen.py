@@ -4,9 +4,14 @@ import tests.annotation_model_tests.test_settings as test_settings
 
 
 def test_superview_model():
+    """
+    Test if the model works on custom metrics.
 
-    final_model_filepath = test_settings.model_path_sv
-    final_artefact = pickle.load(open(final_model_filepath, "rb"))
+    """
+
+    # Check if model
+
+    final_artefact = pickle.load(open(test_settings.model_path_sv, "rb"))
 
     nk_plassen_metrics = custom_model_metrics.custom_model_metrics(
         final_artefact["model"],
