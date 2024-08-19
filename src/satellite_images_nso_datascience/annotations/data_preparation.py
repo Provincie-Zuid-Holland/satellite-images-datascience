@@ -91,6 +91,7 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
 
     dfs = []
 
+    # Check if the annotations are done on multiple .tif files, if so match the name on the tif file in the argument here.
     if "name" in polygon_gdf.columns:
         for aindex, row in polygon_gdf.iterrows():
 
