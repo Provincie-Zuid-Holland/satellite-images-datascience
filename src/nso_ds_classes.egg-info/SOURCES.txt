@@ -1,9 +1,0 @@
-LICENSE
-README.md
-setup.py
-src/nso_ds_classes.egg-info/PKG-INFO
-src/nso_ds_classes.egg-info/SOURCES.txt
-src/nso_ds_classes.egg-info/dependency_links.txt
-src/nso_ds_classes.egg-info/requires.txt
-src/nso_ds_classes.egg-info/top_level.txt
-tests/test_cluster_sampler.py
