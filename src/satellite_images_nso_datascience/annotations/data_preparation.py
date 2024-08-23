@@ -1,9 +1,10 @@
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 import rasterio
 from rasterio.mask import mask
 from shapely.geometry.polygon import Polygon
-import numpy as np
+
 from .utils import get_season_for_month
 
 
@@ -73,8 +74,8 @@ def fill_pixel_columns(
 def extract_dataframe_pixels_values_from_tif_and_polygons(
     tif_dataset: rasterio.DatasetReader,
     polygon_gdf: gpd.GeoDataFrame,
-    name_tif_file=False,
-    name_table=False,
+    name_tif_file=None,
+    name_table=None,
 ) -> pd.DataFrame:
     """
     Filters polygons in polygon_gdf out of tif_dataset (for those polygons where row["name"] matches name_tif_file).
@@ -86,7 +87,7 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     @return pandas DataFrame with a pixel per row
     """
     # Check if there is a table name
-    if not name_table:
+    if name_table is None:
         name_table = name_tif_file
 
     dfs = []
@@ -94,7 +95,6 @@ def extract_dataframe_pixels_values_from_tif_and_polygons(
     # Check if the annotations are done on multiple .tif files, if so match the name on the tif file in the argument here.
     if "name" in polygon_gdf.columns:
         for aindex, row in polygon_gdf.iterrows():
-
             if row["name"] == name_table:
                 df_row = get_flattened_pixels_for_polygon(
                     dataset=tif_dataset, polygon=row["geometry"]

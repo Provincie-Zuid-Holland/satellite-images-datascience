@@ -4,7 +4,7 @@ This repository contains all the necessary resources—training data, models, an
 
 Through our research, we have determined that supervised machine learning models yield the best results. However, these models require extensive training data, which necessitated the manual annotation of satellite image pixels.
 
-The annotated pixels are organized in pandas DataFrames, which are available for download in the data/annotations folder. These annotations are publicly accessible, allowing others to use them for their own model training. Essentially, we've labeled pixel values in the satellite imagery to correspond with different land types.
+The annotated pixels are organized in various gpkg, geojson, shape and qmd files, which are available in the data/annotations folder. These annotations are publicly accessible, allowing others to use them for their own model training. Essentially, we've labeled pixel values in the satellite imagery to correspond with different land types.
 
 The trained models can be downloaded via the links provided in the saved_models folder, as detailed in the readme.md file.
 
@@ -12,6 +12,7 @@ Due to the computational demands of pixel-based predictions—given the sheer vo
 [Here](https://github.com/Provincie-Zuid-Holland/satellite_images_nso_tif_model_iterator).
 
 Thus, this repository is exclusively used for model training.
+
 # Installation
 
 When working with 64x Windows and Anaconda for your python environment management execute the following terminal commands in order, however when only using annotation models this is not used:
@@ -40,7 +41,6 @@ This is done because of the unique spectral values a satellite image can have du
 
 This scaling is done as well as model training done in the notebook /models/annotations_models/train_random_forest_classifier_model.ipynb
 
-
 The resulting data from this can be found at:
 
 Coepelduynen:
@@ -52,7 +52,6 @@ https://e34a505986aa74678a5a0e0f.blob.core.windows.net/satellite-images-nso/Voor
 # Saved Models.
 
 See the saved_models folders for download links to these models.
-
 
 # Cloud Detection Models
 
@@ -79,8 +78,6 @@ Michael de Winter
 Pieter Kouyzer
 
 Jeroen Esseveld
-
-
 
 # Contact
 
